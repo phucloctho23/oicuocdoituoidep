@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <script src="guard.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lịch Thi</title>
+    <link rel="icon" href="https://duytan.edu.vn/images/icon.png" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #d90429;
+            --bg-light: #f8f9fa;
+            --border-color: #e9ecef;
+            --text-dark: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            height: 95vh;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        h1#dynamicTitle {
+            color: var(--primary-color);
+            text-align: center;
+            margin: 0 0 15px 0;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        /* --- SEARCH SECTION --- */
+        #searchSection {
+            margin-bottom: 15px;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+        }
+
+        .input-wrapper {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            padding-right: 60px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.1);
+        }
+
+        .copy-button {
+            padding: 12px 20px;
+            border: none;
+            background: #a8aef4;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #1a1b26;
+            transform: translateY(-2px);
+        }
+
+        #resultStats {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        /* --- TABLE AREA --- */
+        .table-wrapper {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 1000px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        thead th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        /* Highlight chữ đỏ cho Khối thi */
+        .highlight-khoithi {
+            color: red !important;
+            font-weight: 900 !important;
+            background: none !important;
+        }
+
+        /* --- EXPORT ẢNH (GỌN GÀNG) --- */
+        .table-wrapper.capturing {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+
+            /* Tự co lại theo nội dung (fit-content) */
+            width: fit-content !important;
+            min-width: 800px;
+
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -999;
+            background: white;
+            padding: 20px;
+            border: none;
+        }
+
+        .table-wrapper.capturing th,
+        .table-wrapper.capturing td {
+            padding: 8px 10px !important;
+            font-size: 13px !important;
+            border: 1px solid #999 !important;
+            white-space: normal;
+        }
+
+        .export-header,
+        .export-footer {
+            display: none;
+            text-align: center;
+        }
+
+        .table-wrapper.capturing .export-header {
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .table-wrapper.capturing .export-footer {
+            display: block;
+            margin-top: 10px;
+            font-style: italic;
+            color: #53f45e;
+            font-size: 12px;
+        }
+
+        .export-title {
+            color: var(--primary-color);
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .export-time {
+            color: #000;
+            font-size: 14px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* --- MODAL CUTE --- */
+        #modalContainer {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modalContainer.show {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            width: 90%;
+            max-width: 380px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #modalContainer.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .modal-title {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-msg {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-confirm {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(217, 4, 41, 0.3);
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(217, 4, 41, 0.4);
+        }
+
+        .btn-cancel {
+            background: #edf2f4;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #e2e6ea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="modalContainer" onclick="hideModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modalIcon" class="modal-icon">✨</div>
+            <h3 id="modalTitle" class="modal-title"></h3>
+            <p id="modalMessage" class="modal-msg"></p>
+            <div id="modalActions" class="modal-actions"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 id="dynamicTitle">ĐANG TẢI DỮ LIỆU...</h1>
+
+        <div id="searchSection">
+            <div class="search-input-group">
+                <div class="input-wrapper">
+                    <input type="text" id="searchTermInput" placeholder="Nhập: COM 142 EW, CS 462 M, PHI 150 AC..."
+                        oninput="searchData()" autocomplete="off" autofocus />
+                    <div id="resultStats">...</div>
+                </div>
+                <button class="copy-button" onclick="showCopyConfirmModal()">
+                    📸 Chụp
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper" id="tableWrapper">
+            <div id="captureArea">
+                <div id="exportHeader" class="export-header">
+                    <h2 class="export-title" id="exportTitleText">TRA CỨU LỊCH THI</h2>
+                    <p class="export-time" id="exportTimeText"></p>
+                </div>
+
+                <table id="resultTable">
+                    <thead></thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="100%" class="loading">⏳ Đang kết nối server...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="export-footer" id="exportFooter">
+                    * Nội dung chỉ mang tính chất tham khảo. Vui lòng kiểm tra lại trên MyDTU.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const EXAM_FILE_URL = 'https://raw.githubusercontent.com/adminweba/crack/main/LỊCH THI KTHP.xlsx';
+
+        let EXAM_DATA = [];
+        let HEADERS = [];
+        const KEY_COLUMNS_TO_FIND = ['STT', 'Ngày thi', 'Mã môn', 'Môn thi', 'Khối thi'];
+
+        document.addEventListener('DOMContentLoaded', () => { loadAndProcessFile(EXAM_FILE_URL); });
+
+        async function loadAndProcessFile(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Lỗi tải file (${response.status})`);
+                const data = await response.arrayBuffer();
+                processExcelData(data);
+                searchData();
+            } catch (error) {
+                console.error(error);
+                document.querySelector('#resultTable tbody').innerHTML = `<tr><td colspan="100%" style="color:red; text-align:center;">❌ Lỗi: ${error.message}</td></tr>`;
+            }
+        }
+
+        function normalizeHeaderName(name) { return String(name || '').trim().replace(/\s+/g, ' '); }
+
+        function processExcelData(data) {
+            const workbook = XLSX.read(data, { type: 'array', raw: true });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            const rawHeadRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 0, defval: "" });
+            let finalTitle = "TRA CỨU LỊCH THI";
+            for (let i = 0; i < Math.min(rawHeadRows.length, 5); i++) {
+                const row = rawHeadRows[i];
+                if (!row) continue;
+                for (let cell of row) {
+                    if (String(cell).toUpperCase().includes("LỊCH THI KTHP")) {
+                        finalTitle = String(cell).trim(); break;
+                    }
+                }
+            }
+            document.getElementById('dynamicTitle').innerText = finalTitle;
+
+            let headerRowIndex = findActualHeaderIndex(new Uint8Array(data));
+            if (headerRowIndex === -1) return;
+
+            HEADERS = getHeadersFromWorksheet(worksheet, headerRowIndex);
+
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            const dataRange = { s: { r: headerRowIndex + 1, c: range.s.c }, e: range.e };
+            const rawData = XLSX.utils.sheet_to_json(worksheet, { header: HEADERS, range: XLSX.utils.encode_range(dataRange), defval: "", raw: true });
+
+            EXAM_DATA = rawData.filter(row => {
+                const keySTT = HEADERS.find(h => h.toUpperCase() === 'STT');
+                const keyNgay = HEADERS.find(h => h.toUpperCase().includes('NGÀY'));
+                return row[keySTT] && row[keyNgay];
+            });
+        }
+
+        function findActualHeaderIndex(data) {
+            const workbook = XLSX.read(data, { type: 'array', raw: true });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            for (let i = 0; i < 50; i++) {
+                const currentHeaders = getHeadersFromWorksheet(worksheet, i);
+                const normHeaders = currentHeaders.map(h => h.toUpperCase());
+                if (KEY_COLUMNS_TO_FIND.every(k => normHeaders.some(h => h.includes(k.toUpperCase())))) return i;
+            }
+            return -1;
+        }
+
+        function getHeadersFromWorksheet(worksheet, rowIndex) {
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            const headerRange = { s: { r: rowIndex, c: range.s.c }, e: { r: rowIndex, c: range.e.c } };
+            const headersArray = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: XLSX.utils.encode_range(headerRange), defval: null })[0];
+            return headersArray ? headersArray.map(h => normalizeHeaderName(h)).filter(Boolean) : [];
+        }
+
+        // --- SEARCH ---
+        const normalizeSearchString = (term) => String(term || '').trim().toUpperCase();
+        const splitSearchTerm = (term) => {
+            const match = term.match(/^(.*)\s+([A-Z0-9-]+)$/i);
+            if (match) return { maMon: match[1].trim().toUpperCase(), khoiThi: match[2].trim().toUpperCase() };
+            return { maMon: term.toUpperCase(), khoiThi: '' };
+        };
+
+        function searchData() {
+            const input = document.getElementById('searchTermInput');
+            const resultStats = document.getElementById('resultStats');
+            const rawTerms = input.value.split(',').map(normalizeSearchString).filter(Boolean);
+
+            let filtered = EXAM_DATA;
+            if (rawTerms.length > 0) {
+                filtered = EXAM_DATA.filter(row => {
+                    const rowStr = Object.values(row).join(" ").toUpperCase();
+                    return rawTerms.some(term => {
+                        const { maMon, khoiThi } = splitSearchTerm(term);
+
+                        // 1. Kiểm tra tìm kiếm chung toàn dòng (Basic check)
+                        const escapeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        let match = new RegExp("(^|\\s)" + escapeTerm, "i").test(rowStr);
+
+                        // 2. Nếu không tìm thấy chung, kiểm tra logic Mã môn + Khối thi (Nâng cao)
+                        if (!match && khoiThi) {
+                            const cellMaMon = String(row['Mã môn'] || '').toUpperCase();
+                            const cellKhoi = String(row['Khối thi'] || '').toUpperCase();
+
+                            const escapeMaMon = maMon.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const strictRegex = new RegExp("(^|\\s)" + escapeMaMon, "i");
+
+                            if (strictRegex.test(cellMaMon)) {
+                                const inBracket = cellKhoi.match(/\((.*?)\)/);
+                                if (inBracket && inBracket[1].includes(khoiThi)) match = true;
+                            }
+                        }
+                        return match;
+                    });
+                });
+            }
+            resultStats.textContent = filtered.length;
+            displayResults(filtered, rawTerms);
+        }
+
+        function displayResults(data, searchTerms = []) {
+            const tbody = document.querySelector('#resultTable tbody');
+            const thead = document.querySelector('#resultTable thead');
+            tbody.innerHTML = ''; thead.innerHTML = '';
+
+            const trHead = document.createElement('tr');
+            HEADERS.forEach(h => { const th = document.createElement('th'); th.textContent = h; trHead.appendChild(th); });
+            thead.appendChild(trHead);
+
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="${HEADERS.length}" style="text-align:center; padding:20px;">Không tìm thấy kết quả.</td></tr>`; return; }
+
+            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const rowStr = Object.values(row).join(" ").toUpperCase();
+
+                // Lấy danh sách các pattern cần tô đỏ cho dòng này
+                let rowHighlightPatterns = [];
+                if (searchTerms.length > 0) {
+                    searchTerms.forEach(term => {
+                        const { maMon, khoiThi } = splitSearchTerm(term);
+                        if (maMon && rowStr.includes(maMon) && khoiThi) rowHighlightPatterns.push(khoiThi);
+                    });
+                }
+
+                let rowRegex = null;
+                if (rowHighlightPatterns.length > 0) {
+                    // QUAN TRỌNG: Dùng \b để bắt chính xác từ (Word Boundary)
+                    // \bA\b sẽ khớp "A" trong "A-B" nhưng KHÔNG khớp "A" trong "AA"
+                    rowRegex = new RegExp(`\\b(${rowHighlightPatterns.map(escapeRegExp).join('|')})\\b`, 'gi');
+                }
+
+                HEADERS.forEach(key => {
+                    const td = document.createElement('td');
+                    let val = row[key];
+                    if (key.toUpperCase().includes('NGÀY') && typeof val === 'number') val = excelDateToJS(val);
+                    val = String(val || '');
+
+                    // Chỉ highlight đỏ ở cột Khối thi & dùng regex thông minh
+                    if (key.toUpperCase().includes('KHỐI') && rowRegex) {
+                        td.innerHTML = val.replace(rowRegex, `<span class="highlight-khoithi">$1</span>`);
+                    } else {
+                        td.textContent = val;
+                    }
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function excelDateToJS(serial) {
+            if (serial <= 0) return "";
+            const date = new Date((serial - 25569) * 86400 * 1000);
+            return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+        }
+
+        // --- MODAL & CHỤP ẢNH ---
+        function showCopyConfirmModal() {
+            if (document.querySelectorAll('#resultTable tbody tr').length <= 1 && document.querySelector('.loading')) return;
+            showModal("📸", "Chụp ảnh", "Bạn có muốn chụp lại bảng lịch thi này không?", [
+                { text: "Hủy", class: "btn-cancel" },
+                { text: "Chụp Ngay", class: "btn-confirm", action: copyTableImageToClipboard }
+            ]);
+        }
+
+        function showModal(icon, title, msg, actions = []) {
+            const modal = document.getElementById('modalContainer');
+            document.getElementById('modalIcon').innerText = icon;
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerHTML = msg;
+            const actionDiv = document.getElementById('modalActions'); actionDiv.innerHTML = '';
+
+            actions.forEach(act => {
+                const btn = document.createElement('button');
+                btn.className = `modal-btn ${act.class}`;
+                btn.innerText = act.text;
+                btn.onclick = () => { hideModal(); if (act.action) act.action(); };
+                actionDiv.appendChild(btn);
+            });
+            modal.classList.add('show');
+        }
+        function hideModal() { document.getElementById('modalContainer').classList.remove('show'); }
+
+        function copyTableImageToClipboard() {
+            const tableWrapper = document.getElementById('tableWrapper');
+            const captureArea = document.getElementById('captureArea');
+            const now = new Date();
+
+            document.getElementById('exportTitleText').innerText = document.getElementById('dynamicTitle').innerText;
+
+            // --- NGÀY GIỜ ĐẦY ĐỦ 24H ---
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const mo = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
+            // Format: 15:30 - 13/12/2025
+            document.getElementById('exportTimeText').innerText = `${h}:${m} - ${d}/${mo}/${y}`;
+
+            tableWrapper.classList.add('capturing');
+            const oldScroll = tableWrapper.scrollTop;
+            tableWrapper.scrollTop = 0;
+
+            setTimeout(() => {
+                html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: -window.scrollY })
+                    .then(canvas => {
+                        tableWrapper.classList.remove('capturing');
+                        tableWrapper.scrollTop = oldScroll;
+                        canvas.toBlob(blob => {
+                            const item = new ClipboardItem({ "image/png": blob });
+                            navigator.clipboard.write([item]).then(() => {
+                                showModal("🎉", "Thành công", "Đã copy ảnh! (Ctrl+V để gửi)", [{ text: "OK", class: "btn-confirm" }]);
+                            }).catch(err => {
+                                const a = document.createElement('a'); a.download = 'LichThi.png'; a.href = canvas.toDataURL(); a.click();
+                                showModal("⬇️", "Đã tải ảnh", "Trình duyệt chặn copy, đã tải về máy.", [{ text: "OK", class: "btn-confirm" }]);
+                            });
+                        });
+                    });
+            }, 300);
+        }
+    </script>
+</body>
+
+</html>

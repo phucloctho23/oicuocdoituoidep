@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nhật ký bản thân</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    /* Font chữ mềm mại hơn cho tiêu đề */
+    h1,
+    h2,
+    h3,
+    .section-title {
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #fff0f5 0%, #f3e8ff 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .form-container,
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1rem;
+      box-sizing: border-box;
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      backdrop-filter: none;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-top: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: #be185d;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 10px rgba(190, 24, 93, 0.1);
+    }
+
+    header p {
+      color: #831843;
+      font-size: 1.1rem;
+    }
+
+    .card {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      color: #9d174d;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .icon {
+      margin-right: 0.8rem;
+      color: #db2777;
+      font-size: 1.3rem;
+      background: transparent;
+      padding: 0;
+      width: auto;
+      height: auto;
+    }
+
+    .input-field,
+    .select-field {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background-color: rgba(255, 255, 255, 0.8);
+      color: #374151;
+      font-size: 16px;
+      box-sizing: border-box;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus,
+    .select-field:focus {
+      outline: none;
+      background-color: #fff;
+      border-color: #f472b6;
+      box-shadow: 0 4px 15px rgba(244, 114, 182, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .checkbox-label,
+    .radio-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 12px 5px;
+      border-radius: 16px;
+      background-color: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #444;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 50px;
+    }
+
+    .checkbox-label input,
+    .radio-label input {
+      display: none;
+    }
+
+    .checkbox-label:hover,
+    .radio-label:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .checkbox-label:has(input:checked),
+    .radio-label:has(input:checked) {
+      background-color: #db2777;
+      color: white;
+      border-color: #db2777;
+      box-shadow: 0 8px 15px rgba(219, 39, 119, 0.3);
+      transform: translateY(-2px) scale(1.02);
+      font-weight: 600;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radio-label {
+      justify-content: center;
+    }
+
+    @media (min-width: 600px) {
+      .radio-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .radio-label {
+        flex: 1;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .checkbox-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+      }
+
+      .form-container {
+        padding-top: 3rem;
+      }
+    }
+
+    .submit-button {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(to right, #ec4899, #d946ef);
+      color: #fff;
+      font-weight: 700;
+      border-radius: 99px;
+      border: none;
+      font-size: 1.1rem;
+      box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3);
+      cursor: pointer;
+      margin-top: 2rem;
+      transition: transform 0.2s;
+    }
+
+    @media (min-width: 600px) {
+      .submit-button {
+        width: auto;
+        padding: 1rem 4rem;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    .submit-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 25px rgba(236, 72, 153, 0.4);
+    }
+
+    .submit-button:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    .message-box {
+      background: #fbcaca;
+      border-radius: 15px;
+      padding: 1rem;
+      border-left: 5px solid #d946ef;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      margin-top: 2rem;
+    }
+
+    .back-button {
+      display: inline-block;
+      text-decoration: none;
+      color: #db2777;
+      font-weight: 700;
+      margin-top: 2rem;
+      padding: 10px 20px;
+      background: #ffdada;
+      border-radius: 99px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-pink-50 to-purple-100 text-gray-700 min-h-screen">
+  <div class="form-container animate-fade-in">
+
+    <header class="text-center mb-8">
+      <h1 class="text-3xl sm:text-4xl font-bold text-pink-700 mb-2">
+        Nhật Ký Cảm Xúc & Sức Khỏe 🌸
+      </h1>
+      <p class="text-gray-500 text-lg">
+        Lắng nghe cơ thể bạn hôm nay nhé!
+      </p>
+    </header>
+
+    <form id="healthForm" class="space-y-4">
+
+      <div class="card">
+        <label for="fullName" class="section-title">
+          <i class="fas fa-user-circle icon"></i> Tên thân mật & Ngày chu kỳ
+        </label>
+        <input type="text" id="fullName" name="fullName" placeholder="Ví dụ: Mèo Con - Ngày 2" class="input-field"
+          required />
+        <p class="text-xs text-gray-400 mt-2 italic">* Tên này chỉ dùng để chào bạn ở trang kết quả.</p>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-magic icon"></i>Tổng quan hôm nay</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="feelings" value="Tốt" />
+            Tuyệt vời 😊
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="feelings" value="Bình thường" />
+            Bình thường 🍃
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="feelings" value="Không tốt" />
+            Hơi mệt xíu 🌦️
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-cloud-sun icon"></i>Tâm trạng của bạn</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Bình tĩnh" />Bình tĩnh 😌</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Vui vẻ" />Vui vẻ 😄</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Mạnh mẽ" />Mạnh mẽ 💪</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Phấn chấn" />Phấn chấn ✨</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Thất thường" />Sáng nắng chiều mưa
+            🌤️</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Bực bội" />Hơi quạu 😠</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Buồn" />Buồn thiu 😢</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Lo lắng" />Lo lắng 😥</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Thiếu năng lượng" />Hết pin
+            🔋</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Suy nghĩ ám ảnh" />Suy nghĩ nhiều
+            🧠</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Trầm cảm" />Cảm thấy trầm xuống
+            😞</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Cảm thấy có lỗi" />Thấy có lỗi
+            😔</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Lãnh đạm" />Không quan tâm 😶</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Bối rối" />Bối rối 😕</label>
+          <label class="checkbox-label"><input type="checkbox" name="moods" value="Rất hay tự trách mình" />Tự trách
+            mình 😫</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-heartbeat icon"></i>Cơ thể đang nói gì?</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Mọi thứ đều ổn" />Khỏe re
+            👍</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Mệt mỏi" />Mệt mỏi 😴</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Đau lưng" />Đau lưng 😩</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Đau bụng" />Đau bụng 🤢</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Chuột rút" />Chuột rút 💥</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Sưng đau ngực" />Căng ngực
+            🤕</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Đau đầu" />Đau đầu 🤯</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Mụn" />Nổi mụn 😡</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Thèm ăn" />Thèm ăn lung tung
+            🍔</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Mất ngủ" />Khó ngủ 🥱</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Ngứa âm đạo" />Ngứa vùng kín
+            🤒</label>
+          <label class="checkbox-label"><input type="checkbox" name="symptoms" value="Khô âm đạo" />Khô vùng kín
+            💧</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-utensils icon"></i>Tiêu hóa</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="digestion" value="Bình thường" />Ổn định ✅</label>
+          <label class="checkbox-label"><input type="checkbox" name="digestion" value="Đầy hơi" />Đầy hơi 🎈</label>
+          <label class="checkbox-label"><input type="checkbox" name="digestion" value="Táo bón" />Táo bón 🐢</label>
+          <label class="checkbox-label"><input type="checkbox" name="digestion" value="Tiêu chảy" />Tiêu chảy 🐇</label>
+          <label class="checkbox-label"><input type="checkbox" name="digestion" value="Buồn nôn" />Buồn nôn 🤢</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-tint icon"></i>Chu kỳ & "Cô bé"</label>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-600 mb-2">Lượng kinh nguyệt (nếu có)</label>
+          <select id="menstrualFlow" name="menstrualFlow" class="select-field">
+            <option value="">Không có kinh</option>
+            <option value="Bình thường">Bình thường</option>
+            <option value="Ít">Ít (Ra chút xíu)</option>
+            <option value="Nhiều">Nhiều (Ra ồ ạt)</option>
+            <option value="Cục máu đông">Có cục máu đông</option>
+          </select>
+        </div>
+
+        <label class="block text-sm font-medium text-gray-600 mb-2 mt-4">Dịch tiết (Huyết trắng)</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Không có dịch" />Khô
+            thoáng 🚫</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Trắng đục" />Trắng đục
+            ⚪</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Ẩm ướt" />Ẩm ướt
+            💧</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge"
+              value="Như lòng trắng trứng" />Trong & dai (như lòng trắng trứng) 🥚</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Dạng dính" />Dính
+            dính</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Dạng đốm" />Ra chút đốm
+            nâu/đỏ 🔴</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Trắng vón cục" />Vón cục
+            (như bã đậu) 🧀</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Xám" />Màu xám/lạ
+            ⚠️</label>
+          <label class="checkbox-label"><input type="checkbox" name="vaginalDischarge" value="Bất thường" />Có mùi lạ
+            👃</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-egg icon"></i>Dấu hiệu rụng trứng (nếu để ý)</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns"
+              value="Tăng ham muốn tình dục" />Thấy "hứng" hơn thường 🔥</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns" value="Dịch nhầy âm đạo" />Ra nhiều
+            dịch nhầy 💦</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns"
+              value="Đau bụng dưới và vùng chậu" />Nhói bụng dưới 💥</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns"
+              value="Sưng đầu ngực, đau vú" />Căng tức ngực 🤕</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns"
+              value="Thay đổi nhiệt độ cơ sở" />Thân nhiệt tăng 🌡️</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns" value="Xuất hiện đốm máu" />Ra chút
+            máu 🔴</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns" value="Cổ tử cung mở rộng" />Cổ tử
+            cung mềm/mở 🔓</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns"
+              value="Âm đạo hoặc âm hộ bị sưng" />"Cô bé" hơi sưng 🎈</label>
+          <label class="checkbox-label"><input type="checkbox" name="ovulationSigns" value="Đầy bụng" />Đầy bụng
+            🤰</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-heart icon"></i>Chuyện "Yêu" & Nhu cầu</label>
+        <p class="text-sm text-gray-500 mb-2 italic">Phần này giúp theo dõi sức khỏe sinh lý, bạn cứ thoải mái nhé.</p>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Không quan hệ tình dục" />Không có 🚫</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Nhu cầu tình dục bình thường" />Nhu cầu bình thường 😌</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity" value="Nhu cầu tình dục cao" />Nhu
+            cầu cao 🔥</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Nhu cầu tình dục thấp" />Không có hứng thú 🧊</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity" value="Thủ dâm" />Thủ dâm (Tự
+            sướng) 💦</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Quan hệ tình dục có bảo vệ" />Có quan hệ (An toàn) ☂️</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Quan hệ tình dục không bảo vệ" />Có quan hệ (Không bảo vệ) ❗</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity" value="Cực khoái" />Đạt cực khoái
+            💖</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Quan hệ tình dục bằng miệng" />Oral Sex 👅</label>
+          <label class="checkbox-label"><input type="checkbox" name="sexualActivity"
+              value="Quan hệ tình dục qua đường hậu môn" />Anal Sex 🍑</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-running icon"></i>Hoạt động & Khác</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" name="exercise" value="Không tập" />Nghỉ ngơi 🛋️</label>
+          <label class="checkbox-label"><input type="checkbox" name="exercise" value="Đi bộ" />Đi bộ 🚶‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="exercise" value="Yoga" />Yoga 🧘‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="exercise" value="Gym" />Gym 🏋️‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="exercise" value="Chạy" />Chạy bộ 🏃‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="other" value="Thiền" />Thiền định 🧘‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="other" value="Bài tập Kegel" />Tập Kegel
+            🏋️‍♀️</label>
+          <label class="checkbox-label"><input type="checkbox" name="other" value="Bài tập thở" />Tập thở 🌬️</label>
+          <label class="checkbox-label"><input type="checkbox" name="other" value="Căng thẳng" />Bị Stress 😫</label>
+          <label class="checkbox-label"><input type="checkbox" name="other" value="Rượu" />Uống rượu/bia 🍷</label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="card">
+          <label class="section-title"><i class="fas fa-pills icon"></i>Thuốc đang dùng</label>
+          <input type="text" name="medication" placeholder="Ví dụ: Vitamin, Thuốc đau đầu..."
+            class="input-field mb-3" />
+
+          <p class="text-sm font-medium text-gray-600 mb-2">Thuốc tránh thai hàng ngày:</p>
+          <div class="flex flex-col gap-2">
+            <label class="radio-label"><input type="radio" name="ocp" value="Đã uống thuốc đúng giờ" />Đã uống đúng giờ
+              ✅</label>
+            <label class="radio-label"><input type="radio" name="ocp" value="Đã uống bù/ quên thuốc" />Quên/Uống bù
+              💊</label>
+          </div>
+        </div>
+        <div class="card">
+          <label class="section-title"><i class="fas fa-weight-scale icon"></i>Chỉ số cơ thể</label>
+          <div class="mb-3">
+            <label class="text-sm text-gray-600">Cân nặng (kg)</label>
+            <input type="number" name="weight" min="0" step="0.1" placeholder="48.5" class="input-field" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Giấc ngủ tối qua</label>
+            <input type="text" name="sleepQuality" placeholder="Ngủ ngon, hay mê sảng..." class="input-field" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="section-title"><i class="fas fa-pen icon"></i>Ghi chú nhỏ 📝</label>
+        <textarea name="notes" rows="3" placeholder="Viết vài dòng cho riêng mình..." class="input-field"></textarea>
+      </div>
+
+      <div class="flex flex-col items-center mt-8 pb-8">
+        <button type="submit" class="submit-button">
+          Xem lời khuyên <i class="fas fa-magic ml-2"></i>
+        </button>
+        <p class="mt-4 text-xs text-gray-400">
+          <i class="fas fa-lock mr-1"></i> Thông tin của bạn hoàn toàn riêng tư.
+        </p>
+      </div>
+    </form>
+  </div>
+  <script>
+    const form = document.getElementById("healthForm");
+    const submitBtn = form.querySelector(".submit-button");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // 1. Hiệu ứng nút bấm
+      submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang tìm giải pháp...';
+      submitBtn.disabled = true;
+      submitBtn.classList.add("opacity-75", "cursor-wait");
+
+      const formData = new FormData(form);
+      const data = {};
+
+      // Lấy thời gian
+      data["⏰ Thời gian"] = new Date().toLocaleString("vi-VN", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      });
+
+      // Thu thập dữ liệu
+      data["👤 Họ tên"] = formData.get("fullName") || "Bạn";
+      data["Cảm thấy"] = formData.get("feelings") || "Không có";
+      data["Kinh nguyệt"] = formData.get("menstrualFlow") || "Không có";
+      data["Cân nặng"] = formData.get("weight") || "Không có";
+      data["Thuốc tránh thai"] = formData.get("ocp") || "Không có";
+      data["Thuốc ngoài"] = formData.get("medication");
+      data["Giấc ngủ"] = formData.get("sleepQuality") || "Không có";
+      data["Ghi chú"] = formData.get("notes") || "Không có";
+
+      // Hàm lấy danh sách checkbox
+      const checkedValues = (name) => {
+        const values = formData.getAll(name);
+        return values.length > 0 ? values : ["Không có"];
+      };
+
+      data["Tâm trạng"] = checkedValues("moods");
+      data["Triệu chứng"] = checkedValues("symptoms");
+      data["Tiêu hóa"] = checkedValues("digestion");
+      data["Khác"] = checkedValues("other");
+      data["Vận động"] = checkedValues("exercise");
+      data["Tình dục"] = checkedValues("sexualActivity");
+      data["Dịch âm đạo"] = checkedValues("vaginalDischarge");
+      data["Rụng trứng"] = checkedValues("ovulationSigns");
+
+      try {
+        // Tạo lời khuyên chi tiết
+        const advice = generateUltimateAdvice(data);
+        const telegramMessage = formatDataForTelegram(data, advice);
+
+        // Lưu dữ liệu
+        localStorage.setItem("healthDataName", data["👤 Họ tên"]);
+        localStorage.setItem("healthAdvice", advice);
+        localStorage.setItem("pendingTelegramMessage", telegramMessage);
+
+        // Chuyển trang
+        setTimeout(() => {
+          window.location.href = "results.html";
+        }, 500);
+
+      } catch (error) {
+        console.error("Lỗi:", error);
+        alert("Có lỗi xử lý, bạn thử lại nhé!");
+        submitBtn.innerHTML = 'Thử lại';
+        submitBtn.disabled = false;
+      }
+    });
+
+    function formatDataForTelegram(data, advice) {
+      let message = `*🌺 NHẬT KÝ SỨC KHỎE 🌺*\n\n`;
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          let value = data[key];
+          if (Array.isArray(value)) value = value.join(", ");
+          message += `*${key}:* ${value}\n`;
+        }
+      }
+      message += `\n*🌟 GIẢI PHÁP CHI TIẾT:*\n${advice}`;
+      return message;
+    }
+
+    // --- HÀM TẠO LỜI KHUYÊN FULL 100% ---
+    function generateUltimateAdvice(rowData) {
+      let adviceList = [];
+
+      // Hàm thêm lời khuyên
+      const addTip = (condition, icon, title, action) => {
+        if (condition) {
+          adviceList.push(`${icon} ${title}: ${action}`);
+        }
+      };
+
+      // Lấy dữ liệu
+      const s = rowData["Triệu chứng"]; // symptoms
+      const m = rowData["Tâm trạng"]; // moods
+      const d = rowData["Tiêu hóa"]; // digestion
+      const e = rowData["Vận động"]; // exercise
+      const sex = rowData["Tình dục"]; // sexualActivity
+      const v = rowData["Dịch âm đạo"]; // vaginalDischarge
+      const o = rowData["Rụng trứng"]; // ovulationSigns
+      const f = rowData['Cảm thấy']; // feelings
+      const oth = rowData["Khác"]; // other
+      const flow = rowData['Kinh nguyệt'];
+
+      // 1. TỔNG QUAN (Feelings)
+      addTip(f === "Tốt", "🌟", "Tổng quan", "Tuyệt vời! Hãy tận dụng ngày đẹp trời này.");
+      addTip(f === "Bình thường", "🍃", "Tổng quan", "Mọi thứ ổn định. Hãy duy trì thói quen tốt.");
+      addTip(f === "Không tốt", "🌧️", "Tổng quan", "Đừng cố quá. Hãy nuông chiều bản thân hôm nay.");
+
+      // 2. TÂM TRẠNG (Moods - Full list)
+      if (m.includes("Bình tĩnh")) addTip(true, "😌", "Bình tĩnh", "Trạng thái tuyệt vời để ra các quyết định quan trọng.");
+      if (m.includes("Vui vẻ")) addTip(true, "😄", "Vui vẻ", "Nụ cười là thuốc bổ, hãy lan tỏa nó nhé!");
+      if (m.includes("Mạnh mẽ")) addTip(true, "💪", "Mạnh mẽ", "Bạn đang rất 'cháy'! Giải quyết ngay những việc khó nhất nào.");
+      if (m.includes("Phấn chấn")) addTip(true, "✨", "Phấn chấn", "Năng lượng cao! Thích hợp để sáng tạo hoặc tập luyện.");
+      if (m.includes("Thất thường")) addTip(true, "🌤️", "Thất thường", "Đừng lo, hormone thay đổi thôi. Chấp nhận cảm xúc lúc này.");
+      if (m.includes("Bực bội")) addTip(true, "😠", "Bực bội", "Đi bộ nhanh hoặc đấm vào gối để xả năng lượng tiêu cực.");
+      if (m.includes("Buồn")) addTip(true, "😢", "Buồn", "Khóc cũng là cách thải độc cho tâm hồn. Bạn sẽ ổn thôi.");
+      if (m.includes("Lo lắng")) addTip(true, "😥", "Lo lắng", "Hít sâu 4s - Giữ 7s - Thở ra 8s. Làm 3 lần ngay đi.");
+      if (m.includes("Trầm cảm")) addTip(true, "🤝", "Trầm cảm", "Hãy nhắn tin cho một người bạn thân. Đừng ở một mình quá lâu.");
+      if (m.includes("Cảm thấy có lỗi")) addTip(true, "😔", "Tự trách", "Tha thứ cho bản thân đi. Ai cũng mắc sai lầm mà.");
+      if (m.includes("Suy nghĩ ám ảnh")) addTip(true, "🧠", "Suy nghĩ nhiều", "Viết hết ra giấy (Brain dump) để giải phóng đầu óc.");
+      if (m.includes("Thiếu năng lượng")) addTip(true, "🔋", "Hết pin", "Nghỉ ngơi ngay. Đừng uống thêm cafe, hãy uống nước lọc.");
+      if (m.includes("Lãnh đạm")) addTip(true, "😶", "Lãnh đạm", "Thử nghe một bản nhạc sôi động để kích thích giác quan.");
+      if (m.includes("Bối rối")) addTip(true, "😕", "Bối rối", "Đừng quyết định gì lúc này. Ngủ một giấc đã.");
+      if (m.includes("Rất hay tự trách mình")) addTip(true, "😫", "Áp lực", "Hãy nói với mình: 'Tôi đã làm tốt nhất có thể rồi'.");
+
+      // 3. TRIỆU CHỨNG (Symptoms - Full list)
+      if (s.includes("Mọi thứ đều ổn")) addTip(true, "✅", "Sức khỏe", "Cơ thể ngoan. Hãy tự thưởng cho mình món gì đó ngon!");
+      if (s.includes("Chuột rút")) addTip(true, "🔥", "Chuột rút", "Chườm ấm ngay. Bổ sung Magie (chuối, bơ, hạt).");
+      if (s.includes("Sưng đau ngực")) addTip(true, "👙", "Đau ngực", "Thả rông khi ở nhà, massage nhẹ nhàng dưới vòi hoa sen ấm.");
+      if (s.includes("Đau đầu")) addTip(true, "💆‍♀️", "Đau đầu", "Uống 1 cốc nước lớn. Rời xa màn hình điện thoại 20 phút.");
+      if (s.includes("Mụn")) addTip(true, "🧼", "Mụn", "Đừng sờ tay lên mặt! Rửa mặt sạch và ngủ sớm.");
+      if (s.includes("Đau lưng")) addTip(true, "🧘‍♀️", "Đau lưng", "Nằm ngửa, kê gối dưới đầu gối. Tránh ngồi sai tư thế.");
+      if (s.includes("Mệt mỏi")) addTip(true, "💤", "Mệt mỏi", "Chợp mắt 15-20 phút (Power nap) để sạc lại pin.");
+      if (s.includes("Thèm ăn")) addTip(true, "🍎", "Thèm ăn", "Cơ thể cần năng lượng. Chọn trái cây thay vì bánh ngọt.");
+      if (s.includes("Mất ngủ")) addTip(true, "🌙", "Mất ngủ", "Ngâm chân nước ấm 10 phút trước khi lên giường.");
+      if (s.includes("Đau bụng")) addTip(true, "🍵", "Đau bụng", "Uống trà gừng ấm. Nằm co người (tư thế bào thai).");
+      if (s.includes("Ngứa âm đạo")) addTip(true, "⚠️", "Ngứa vùng kín", "Rửa sạch bằng nước ấm, lau khô. Tuyệt đối không gãi.");
+      if (s.includes("Khô âm đạo")) addTip(true, "💧", "Khô hạn", "Uống thêm nước. Cân nhắc dùng gel bôi trơn dưỡng ẩm.");
+
+      // 4. TIÊU HÓA (Digestion - Full list)
+      if (d.includes("Bình thường")) addTip(true, "👍", "Tiêu hóa", "Hệ tiêu hóa tốt là chìa khóa của làn da đẹp.");
+      if (d.includes("Buồn nôn")) addTip(true, "🍋", "Buồn nôn", "Ngửi vỏ chanh, uống trà gừng. Ăn đồ khô (bánh quy, bánh mì).");
+      if (d.includes("Đầy hơi")) addTip(true, "🎈", "Đầy hơi", "Tránh đồ uống có ga. Thử động tác Yoga 'Ôm gối' để đẩy hơi.");
+      if (d.includes("Táo bón")) addTip(true, "🥝", "Táo bón", "Ăn ngay đu đủ/thanh long. Uống nhiều nước vào buổi sáng.");
+      if (d.includes("Tiêu chảy")) addTip(true, "🍞", "Tiêu chảy", "Ăn cháo trắng, chuối. Uống Oresol để bù điện giải.");
+
+      // 5. KINH NGUYỆT (Menstrual Flow)
+      if (flow === "Bình thường") addTip(true, "🩸", "Kinh nguyệt", "Chu kỳ ổn định. Nhớ thay băng vệ sinh mỗi 4 tiếng.");
+      if (flow === "Ít") addTip(true, "📉", "Kinh ít", "Có thể do stress hoặc ăn kiêng. Theo dõi thêm chu kỳ sau.");
+      if (flow === "Nhiều") addTip(true, "🍷", "Kinh nhiều", "Ăn thêm thịt bò, rau bina để bổ máu. Tránh vận động mạnh.");
+      if (flow === "Cục máu đông") addTip(true, "⚠️", "Máu đông", "Uống nước ấm để máu lưu thông. Nếu đau dữ dội hãy đi khám.");
+
+      // 6. KHÁC (Other - Full list)
+      if (oth.includes("Đi lại")) addTip(true, "🚶", "Đi lại", "Vận động nhẹ nhàng giúp khí huyết lưu thông, giảm mệt mỏi.");
+      if (oth.includes("Căng thẳng")) addTip(true, "🤯", "Căng thẳng", "Ngưng việc đang làm lại. Hít thở sâu 5 lần.");
+      if (oth.includes("Thiền")) addTip(true, "🧘", "Thiền", "Tuyệt vời! Thiền giúp cân bằng hormone và cảm xúc.");
+      if (oth.includes("Bài tập Kegel")) addTip(true, "🍑", "Kegel", "Rất tốt cho cơ sàn chậu. Tiếp tục duy trì nhé!");
+      if (oth.includes("Bài tập thở")) addTip(true, "🌬️", "Tập thở", "Oxy là liều thuốc tự nhiên tốt nhất cho làn da và não bộ.");
+      if (oth.includes("Bị bệnh hay bị thương")) addTip(true, "🚑", "Sức khỏe yếu", "Ưu tiên số 1 lúc này là nghỉ ngơi và tuân thủ y lệnh.");
+      if (oth.includes("Rượu")) addTip(true, "🍷", "Có cồn", "Nhớ uống 1 ly nước lọc sau mỗi ly rượu để tránh mất nước/đau đầu.");
+
+      // 7. THUỐC (Medication)
+      const ocp = rowData["Thuốc tránh thai"];
+      if (ocp === "Đã uống thuốc đúng giờ") addTip(true, "✅", "Tránh thai", "Rất tốt, bạn đang được bảo vệ an toàn.");
+      if (ocp === "Đã uống bù/ quên thuốc") addTip(true, "⏰", "Quên thuốc", "Đặt báo thức cố định hàng ngày để không quên nữa nhé!");
+      if (rowData["Thuốc ngoài"]) addTip(true, "💊", "Thuốc khác", `Bạn đang dùng thêm thuốc. Nhớ kiểm tra tương tác thuốc nhé.`);
+
+      // 8. VẬN ĐỘNG (Exercise - Full list)
+      if (e.includes("Không tập")) addTip(true, "🛋️", "Nghỉ ngơi", "Hôm nay nghỉ cũng được, nhưng đừng ngồi một chỗ quá lâu.");
+      if (e.includes("Yoga")) addTip(true, "🧘‍♀️", "Yoga", "Nhớ thực hiện Savasana cuối buổi để thư giãn toàn thân.");
+      if (e.includes("Gym")) addTip(true, "🏋️‍♀️", "Gym", "Nạp Protein sau tập để cơ bắp phục hồi nhé.");
+      if (e.includes("Aerobic & nhảy múa")) addTip(true, "💃", "Nhảy", "Cách xả stress tuyệt vời nhất!");
+      if (e.includes("Bơi lội")) addTip(true, "🏊‍♀️", "Bơi", "Nhớ dưỡng ẩm da và tóc sau khi bơi xong.");
+      if (e.includes("Thể thao đồng đội")) addTip(true, "⚽", "Team sports", "Vừa khỏe vừa vui. Cẩn thận chấn thương va chạm.");
+      if (e.includes("Chạy")) addTip(true, "🏃‍♀️", "Chạy bộ", "Giãn cơ kỹ sau khi chạy để tránh đau chân ngày mai.");
+      if (e.includes("Đạp xe đạp")) addTip(true, "🚴‍♀️", "Đạp xe", "Bài tập tim mạch tuyệt vời và ít chấn thương.");
+      if (e.includes("Đi bộ")) addTip(true, "🚶‍♀️", "Đi bộ", "Duy trì đi bộ 30p mỗi ngày là đủ để khỏe mạnh.");
+
+      // 9. TÌNH DỤC (Sexual Activity - Full list)
+      if (sex.includes("Không quan hệ tình dục")) addTip(true, "🚫", "Kiêng", "Dành thời gian chăm sóc bản thân theo cách khác.");
+      if (sex.includes("Thủ dâm")) addTip(true, "🌸", "Self-love", "Cách an toàn để giảm stress và ngủ ngon. Nhớ vệ sinh tay.");
+      if (sex.includes("Quan hệ tình dục có bảo vệ")) addTip(true, "🛡️", "An toàn", "Tuyệt vời. Bạn đang bảo vệ mình và đối tác rất tốt.");
+      if (sex.includes("Quan hệ tình dục không bảo vệ")) addTip(true, "❗", "Nguy cơ", "Nếu lo lắng, hãy cân nhắc thuốc khẩn cấp và kiểm tra sức khỏe.");
+      if (sex.includes("Quan hệ tình dục bằng miệng")) addTip(true, "👅", "Oral Sex", "Vẫn có nguy cơ lây bệnh (nhiệt miệng, viêm họng). Hãy chú ý vệ sinh.");
+      if (sex.includes("Quan hệ tình dục qua đường hậu môn")) addTip(true, "🍑", "Anal Sex", "Sử dụng nhiều gel bôi trơn để tránh tổn thương. Vệ sinh kỹ.");
+      if (sex.includes("Cực khoái")) addTip(true, "🎆", "Cực khoái", "Liều thuốc giảm đau và an thần tự nhiên tuyệt diệu.");
+      if (sex.includes("Nhu cầu tình dục cao")) addTip(true, "🔥", "Ham muốn cao", "Dấu hiệu sức khỏe tốt hoặc đang rụng trứng.");
+      if (sex.includes("Nhu cầu tình dục bình thường")) addTip(true, "😌", "Ham muốn ổn", "Cân bằng là tốt nhất.");
+      if (sex.includes("Nhu cầu tình dục thấp")) addTip(true, "🧊", "Ham muốn thấp", "Đừng áp lực. Stress và mệt mỏi thường là nguyên nhân chính.");
+
+      // 10. DỊCH ÂM ĐẠO (Vaginal Discharge - Full list)
+      if (v.includes("Không có dịch")) addTip(true, "🌵", "Không dịch", "Bình thường ở những ngày vừa sạch kinh.");
+      if (v.includes("Trắng đục")) addTip(true, "⚪", "Trắng đục", "Dịch sinh lý bình thường, không ngứa là ổn.");
+      if (v.includes("Ẩm ướt")) addTip(true, "💧", "Ẩm ướt", "Cơ thể đang có nồng độ Estrogen tốt.");
+      if (v.includes("Dạng dính")) addTip(true, "🍯", "Dịch dính", "Thường xuất hiện sau khi hết kinh.");
+      if (v.includes("Như lòng trắng trứng")) addTip(true, "🥚", "Rụng trứng", "Thời điểm 'vàng' để thụ thai. Dịch này giúp tinh trùng di chuyển tốt.");
+      if (v.includes("Dạng đốm")) addTip(true, "🔴", "Đốm máu", "Nếu không phải đến kỳ, có thể là máu báo rụng trứng hoặc tổn thương nhỏ.");
+      if (v.includes("Bất thường") || v.includes("Trắng vón cục") || v.includes("Xám")) {
+        addTip(true, "🚑", "Dịch lạ", "Dấu hiệu nấm hoặc viêm nhiễm. Nên đi khám phụ khoa sớm.");
+      }
+
+      // 11. RỤNG TRỨNG (Ovulation Signs - Full list)
+      if (o.includes("Thay đổi nhiệt độ cơ sở")) addTip(true, "🌡️", "Nhiệt độ", "Thân nhiệt tăng nhẹ báo hiệu đã rụng trứng.");
+      if (o.includes("Dịch nhầy âm đạo")) addTip(true, "💦", "Dịch nhầy", "Cửa sổ thụ thai đang mở.");
+      if (o.includes("Xuất hiện đốm máu")) addTip(true, "🔴", "Máu rụng trứng", "Một chút máu là bình thường khi nang trứng vỡ.");
+      if (o.includes("Tăng ham muốn tình dục")) addTip(true, "🔥", "Hứng khởi", "Cơ thể đang mời gọi theo bản năng tự nhiên.");
+      if (o.includes("Sưng đầu ngực, đau vú")) addTip(true, "🤕", "Ngực căng", "Do progesterone tăng cao. Mặc áo rộng cho thoải mái.");
+      if (o.includes("Đau bụng dưới và vùng chậu")) addTip(true, "💥", "Đau bụng", "Đau Mittelschmerz (giữa chu kỳ). Chườm ấm sẽ đỡ.");
+      if (o.includes("Cổ tử cung mở rộng")) addTip(true, "🔓", "Cổ tử cung", "Cổ tử cung mềm, cao, mở - Dễ thụ thai nhất lúc này.");
+      if (o.includes("Âm đạo hoặc âm hộ bị sưng")) addTip(true, "🎈", "Sưng nhẹ", "Do lưu lượng máu tăng cao vùng chậu, không sao cả.");
+      if (o.includes("Đầy bụng") || o.includes("Đầy hơi")) addTip(true, "🤰", "Chướng bụng", "Ăn nhẹ, chia nhỏ bữa để giảm khó chịu.");
+      if (o.includes("Buồn nôn")) addTip(true, "🤢", "Buồn nôn", "Nghỉ ngơi, uống nước gừng.");
+      if (o.includes("Nhức đầu")) addTip(true, "🤯", "Đau đầu", "Nghỉ ngơi nơi tối, yên tĩnh.");
+
+      // 12. CÂN NẶNG & GIẤC NGỦ
+      const weight = parseFloat(rowData['Cân nặng']);
+      if (weight && weight < 45) addTip(true, "🥑", "Cân nặng", "Hơi nhẹ cân. Bổ sung thêm bữa phụ dinh dưỡng nhé.");
+      if (weight && weight > 65) addTip(true, "⚖️", "Cân nặng", "Duy trì vận động đều đặn để cơ thể săn chắc.");
+
+      const sleep = rowData["Giấc ngủ"];
+      if (sleep && sleep !== "Không có") addTip(true, "💤", "Giấc ngủ", `Bạn ghi: "${sleep}". Giấc ngủ rất quan trọng với nội tiết, ưu tiên nó nhé.`);
+
+      if (adviceList.length === 0) {
+        return "Hôm nay bạn ít chia sẻ quá. Hãy nhớ uống đủ nước và ngủ sớm nhé! 💖";
+      }
+
+      return adviceList.join('\n\n');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const radios = document.querySelectorAll('input[type="radio"]');
+
+      radios.forEach((radio) => {
+
+        radio.dataset.state = radio.checked ? "checked" : "unchecked";
+
+        radio.addEventListener("click", function (e) {
+          if (this.dataset.state === "checked") {
+            this.checked = false;
+            this.dataset.state = "unchecked";
+          } else {
+            const groupName = this.name;
+            document.querySelectorAll(`input[name="${groupName}"]`).forEach((r) => {
+              r.dataset.state = "unchecked";
+            });
+            this.dataset.state = "checked";
+          }
+        });
+      });
+    });
+
+  </script>
+</body>
+
+</html>

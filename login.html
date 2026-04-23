@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Đăng nhập</title>
+    <link rel="icon" href="logoo.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #a32026;
+            --secondary: #24A1DE;
+            --bg: #fdf2f2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            flex: 1;
+            min-width: 280px;
+            /* Hạ min-width xuống để tránh tràn màn nhỏ */
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h2,
+        h3 {
+            color: var(--primary);
+            margin: 0 0 15px 0;
+            font-size: 1.4rem;
+        }
+
+        form {
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .price-tag {
+            background: #fff5f5;
+            color: var(--primary);
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 1px solid #ffcccc;
+            width: 100%;
+        }
+
+        .note {
+            font-size: 13px;
+            color: #666;
+            text-align: left;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .qr-code {
+            width: 100%;
+            max-width: 180px;
+            height: auto;
+            border: 3px solid #f4f4f4;
+            border-radius: 10px;
+            margin: 5px 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn-contact {
+            text-decoration: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+            min-width: 130px;
+            justify-content: center;
+        }
+
+        .btn-tele {
+            background: var(--secondary);
+        }
+
+        .btn-help {
+            background: #555;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        @media (max-width: 650px) {
+            .container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="box">
+            <h2>HỖ TRỢ DTU</h2>
+            <form id="loginForm" autocomplete="off">
+                <input type="text" id="username" placeholder="Tên đăng nhập" required autocomplete="one-time-code">
+                <input type="password" id="password" placeholder="Mật khẩu" required autocomplete="new-password">
+                <button type="submit" class="btn-login">ĐĂNG NHẬP</button>
+            </form>
+        </div>
+        <div class="box">
+            <h3>Đăng ký tài khoản</h3>
+            <div class="price-tag">Phí dịch vụ: <br>
+                5.000 VNĐ / 1 ngày <br>
+                39.000 VNĐ / 7 ngày <br>
+                89.000 VNĐ / 1 tháng</div>
+            <p class="note">🌟 <span class="highlight">Lưu ý:</span> Việc mua là <span class="highlight">tự
+                    nguyện</span>. Có phí riêng từng chức năng nếu không mua theo tuần.</p>
+            <img src="maqrtan.png" alt="Mã QR" class="qr-code">
+            <div class="btn-group">
+                <a href="https://t.me/caulatatca" target="_blank" class="btn-contact btn-tele"><i
+                        class="fab fa-telegram"></i> Gửi bill</a>
+                <a href="https://hotrosvdtu.vercel.app/" target="_blank" class="btn-contact btn-help"><i
+                        class="fas fa-question-circle"></i> Hỗ trợ</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybFi5Znv9wzbJ_EE-WD6hn4n37LQZcU_wTJuVZ6hlO6pp4uLmbS8d2D3Efd2PojnQlJg/exec";
+        function showToast(msg, type = 'error') {
+            const toast = document.createElement('div');
+            toast.innerText = msg;
+            toast.style.cssText = `position:fixed; top:20px; left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:30px; color:white; font-weight:bold; z-index:10000; background:${type === 'success' ? '#2ecc71' : '#e74c3c'}; box-shadow:0 4px 15px rgba(0,0,0,0.2); font-size:14px; white-space:nowrap;`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reason') === 'timeout') showToast("Hết 10 phút, mời đăng nhập lại");
+        if (urlParams.get('reason') === 'expired') showToast("Tài khoản Premium đã hết hạn");
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.innerText = "⏳ Đang kiểm tra..."; btn.disabled = true;
+            try {
+                const response = await fetch(`${SCRIPT_URL}?user=${document.getElementById('username').value}&pass=${document.getElementById('password').value}`);
+                const result = await response.json();
+        // Tìm đoạn code khi result.status === "success" và sửa thành:
+// Tìm đoạn này trong login.html và thay thế chính xác:
+if (result.status === "success") {
+    // Chuyển sang dùng localStorage cho chắc chắn
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('lastActivityTime', new Date().getTime().toString());
+    
+    // Chuyển trang
+    window.location.href = "index.html";
+}
+else {
+                    showToast(result.message);
+                    btn.innerText = "ĐĂNG NHẬP"; btn.disabled = false;
+                }
+            } catch (err) {
+                showToast("⚠️ Lỗi kết nối Server!");
+                btn.innerText = "ĐĂNG NHẬP"; btn.disabled = false;
+            }
+        });
+        // 1. Chặn chuột phải
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // 2. Chặn các phím tắt (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+U, Ctrl+S, Ctrl+C)
+        document.onkeydown = function (e) {
+            // Chặn F12
+            if (e.keyCode == 123) {
+                return false;
+            }
+            // Chặn Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J (Mở DevTools)
+            if (e.ctrlKey && e.shiftKey && (e.keyCode == 'I'.charCodeAt(0) || e.keyCode == 'C'.charCodeAt(0) || e.keyCode == 'J'.charCodeAt(0))) {
+                return false;
+            }
+            // Chặn Ctrl+U (Xem nguồn trang)
+            if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+                return false;
+            }
+            // Chặn Ctrl+S (Lưu trang)
+            if (e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)) {
+                return false;
+            }
+            // Chặn Ctrl+C (Copy) và Ctrl+A (Chọn tất cả)
+            if (e.ctrlKey && (e.keyCode == 'C'.charCodeAt(0) || e.keyCode == 'A'.charCodeAt(0))) {
+                return false;
+            }
+        };
+
+        // 3. Chặn bôi đen nội dung (Dùng JS để chắc chắn hơn CSS)
+        document.onselectstart = function () { return false; };
+
+
+
+
+        (function() {
+// Xóa hoặc tăng timeout trong login.html
+const timeout = 15 * 60 * 1000; // Tăng lên 15 phút
+    const links = [
+        "https://t.me/+vHIkOFo7YeRlMGVl",
+        "https://mydtu.duytan.edu.vn/Signin.aspx"
+    ];
+
+    let idleTimer;
+
+    // 2. Hàm chuyển hướng ngẫu nhiên
+    function redirectRandomly() {
+        const randomIndex = Math.floor(Math.random() * links.length);
+        window.location.href = links[randomIndex];
+    }
+
+    // 3. Hàm reset bộ đếm
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(redirectRandomly, timeout);
+    }
+
+    // 4. Theo dõi hành động của người dùng tại trang Login
+    // Nếu họ có gõ phím hoặc di chuột thì sẽ không bị chuyển hướng
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    
+    activityEvents.forEach(event => {
+        document.addEventListener(event, resetIdleTimer, true);
+    });
+
+    // Bắt đầu đếm ngược ngay khi vừa vào trang Login
+    resetIdleTimer();
+})();
+    </script>
+</body>
+
+</html>

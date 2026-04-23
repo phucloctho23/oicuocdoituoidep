@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <script src="guard.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lịch Thi</title>
+    <link rel="icon" href="logoo.png" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #c0392b;
+            /* Màu đỏ đô */
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            height: 95vh;
+            max-height: 95vh;
+            margin: 0 auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TIÊU ĐỀ ĐỘNG --- */
+        #dynamicTitle {
+            color: var(--primary-color);
+            text-align: center;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 1.5rem;
+            line-height: 1.4;
+            flex-shrink: 0;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+        }
+
+        /* SEARCH SECTION */
+        #searchSection {
+            padding: 0;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+            justify-content: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 60%;
+            max-width: 700px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid var(--primary-color);
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            padding-right: 80px;
+        }
+
+        input[type="text"]:focus {
+            box-shadow: 0 0 5px rgba(192, 57, 43, 0.3);
+        }
+
+        .copy-button {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .copy-button:hover {
+            background-color: #2ecc71;
+        }
+
+        #resultStats {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-weight: 600;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* TABLE AREA */
+        .table-wrapper {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            position: relative;
+        }
+
+        #resultTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #resultTable th,
+        #resultTable td {
+            border: 1px solid #eee;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        #resultTable th:nth-child(1),
+        #resultTable td:nth-child(1),
+        #resultTable th:nth-child(2),
+        #resultTable td:nth-child(2),
+        #resultTable th:nth-child(3),
+        #resultTable td:nth-child(3) {
+            text-align: center;
+        }
+
+        #resultTable thead th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        #resultTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .highlight-khoithi {
+            color: red;
+            font-weight: bold;
+        }
+
+        mark {
+            background-color: yellow;
+            color: red;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+
+        .table-wrapper.capturing {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1200px;
+            z-index: -999;
+            background: white;
+        }
+
+        /* Header ẩn khi chụp ảnh */
+        .export-header {
+            text-align: center;
+            padding: 15px 10px 5px 10px;
+            display: none;
+            background: white;
+        }
+
+        .export-time {
+            color: #555;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        /* --- FOOTER ẨN (DÒNG LƯU Ý) --- */
+        .export-footer {
+            text-align: center;
+            padding: 15px 10px;
+            font-style: italic;
+            font-size: 13px;
+            color: #666;
+            display: none;
+            /* Mặc định ẩn */
+            background: white;
+            border-top: 1px solid #eee;
+        }
+
+        /* Modal */
+        #modalContainer {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modalContainer.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .loading {
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="modalContainer" onclick="hideModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 id="modalTitle" style="margin-top:0; color:#333;"></h3>
+            <p id="modalMessage"></p>
+            <button class="modal-btn" onclick="hideModal()">Đóng</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 id="dynamicTitle">ĐANG TẢI DỮ LIỆU...</h1>
+
+        <div id="searchSection">
+            <div class="search-input-group">
+                <div class="input-wrapper">
+                    <input type="text" id="searchTermInput"
+                        placeholder="Nhập môn, mã lớp, ngày thi... (VD: CS 462 M, PHY 150A)" oninput="searchData()"
+                        autocomplete="off" />
+                    <div id="resultStats"></div>
+                </div>
+                <button class="copy-button" onclick="copyTableImageToClipboard()">
+                    📷 Chụp bảng
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper" id="tableWrapper">
+            <div id="captureArea">
+                <div id="exportHeader" class="export-header">
+                    <h2 id="exportTitleText"
+                        style="color: #c0392b; margin: 0; text-transform: uppercase; font-size: 1.4rem;"></h2>
+                    <div class="export-time" id="exportTimeText"></div>
+                </div>
+
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">STT</th>
+                            <th style="width: 120px;">NGÀY THI</th>
+                            <th style="width: 100px;">GIỜ THI</th>
+                            <th>KHỐI THI (MÃ LỚP)</th>
+                            <th>ĐỊA ĐIỂM</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="loading">⏳ Đang tải dữ liệu server...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div id="exportFooter" class="export-footer">
+                    * Nội dung chỉ mang tính chất tham khảo, không chịu trách nhiệm nếu có sai sót. Sinh viên vui lòng
+                    kiểm tra lại lịch chính thức.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const EXAM_FILE_URL = 'https://raw.githubusercontent.com/adminweba/crack/main/LỊCH THI KTHP.xlsx';
+
+        let EXAM_DATA = [];
+        let HEADERS = [];
+
+        // --- CẤU HÌNH TÊN CỘT ---
+        const STT_HEADER_NAME = 'STT';
+        const NGAY_THI_HEADER_NAME = 'Ngày thi';
+        const GIO_THI_HEADER_NAME = 'Giờ thi';
+        const KHOI_THI_HEADER_NAME = 'Khối thi';
+        const MA_MON_HEADER_NAME = 'Mã môn';
+        const MON_THI_HEADER_NAME = 'Môn thi';
+        const DIA_DIEM_HEADER_NAME = 'Địa điểm';
+
+        document.addEventListener('DOMContentLoaded', () => { loadAndProcessFile(EXAM_FILE_URL); });
+
+        async function loadAndProcessFile(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Lỗi tải file (${response.status})`);
+                const data = await response.arrayBuffer();
+                processExcelData(data);
+                searchData();
+            } catch (error) {
+                console.error(error);
+                document.querySelector('#resultTable tbody').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">❌ Lỗi: ${error.message}</td></tr>`;
+                document.getElementById('dynamicTitle').innerText = "LỖI TẢI DỮ LIỆU";
+            }
+        }
+
+        function normalizeHeaderName(name) { return String(name || '').trim().replace(/\s+/g, ' '); }
+
+        function processExcelData(data) {
+            const workbook = XLSX.read(data, { type: 'array', raw: true });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            // 1. TÌM TIÊU ĐỀ
+            const rawHeadRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 0, defval: "" });
+            let finalTitle = "TRA CỨU LỊCH THI KTHP";
+
+            for (let i = 0; i < Math.min(rawHeadRows.length, 5); i++) {
+                const row = rawHeadRows[i];
+                if (!row) continue;
+                for (let c = 0; c < Math.min(row.length, 20); c++) {
+                    const cellValue = String(row[c] || "").trim();
+                    if (cellValue.toUpperCase().includes("LỊCH THI KTHP")) {
+                        finalTitle = cellValue;
+                        break;
+                    }
+                }
+                if (finalTitle !== "TRA CỨU LỊCH THI KTHP") break;
+            }
+            document.getElementById('dynamicTitle').innerText = finalTitle;
+
+            // 2. TÌM HEADER BẢNG
+            let headerRowIndex = -1;
+            const MAX_ROWS = 20;
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+            for (let i = 0; i < MAX_ROWS; i++) {
+                const rowRange = { s: { r: i, c: range.s.c }, e: { r: i, c: range.e.c } };
+                const rowData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: XLSX.utils.encode_range(rowRange) })[0];
+                if (rowData) {
+                    const rowStr = rowData.join(' ').toUpperCase();
+                    if (rowStr.includes('NGÀY') && (rowStr.includes('MÃ') || rowStr.includes('KHỐI'))) {
+                        headerRowIndex = i;
+                        HEADERS = rowData.map(h => normalizeHeaderName(h));
+                        break;
+                    }
+                }
+            }
+
+            if (headerRowIndex === -1) throw new Error("Không tìm thấy bảng dữ liệu.");
+
+            // 3. LẤY DỮ LIỆU & LỌC
+            const rawData = XLSX.utils.sheet_to_json(worksheet, {
+                header: HEADERS,
+                range: headerRowIndex + 1,
+                defval: ""
+            });
+
+            const keySTT = HEADERS.find(h => h.toUpperCase() === 'STT') || 'STT';
+
+            EXAM_DATA = rawData.filter(row => {
+                const valSTT = row[keySTT];
+                if (!valSTT) return false;
+                if (isNaN(parseInt(valSTT))) return false;
+                return true;
+            });
+        }
+
+        // CÁC HÀM SEARCH GIỮ NGUYÊN
+        const normalizeSearchString = (term) => String(term || '').trim().toUpperCase();
+        const splitSearchTerm = (term) => {
+            const match = term.match(/^(.*)\s+([A-Z0-9-]+)$/i);
+            if (match) return { maMon: match[1].trim().toUpperCase(), khoiThi: match[2].trim().toUpperCase() };
+            return { maMon: term.toUpperCase(), khoiThi: '' };
+        };
+
+        function searchData() {
+            const input = document.getElementById('searchTermInput');
+            const resultStats = document.getElementById('resultStats');
+            const rawSearchText = input.value;
+            const rawTerms = rawSearchText.split(',').map(normalizeSearchString).filter(Boolean);
+
+            const getKey = (partialName) => HEADERS.find(h => normalizeHeaderName(h).toUpperCase().includes(partialName.toUpperCase())) || partialName;
+
+            const KEY_MA_MON = getKey(MA_MON_HEADER_NAME);
+            const KEY_MON_THI = getKey(MON_THI_HEADER_NAME);
+            const KEY_KHOI = getKey(KHOI_THI_HEADER_NAME);
+            const KEY_NGAY = getKey(NGAY_THI_HEADER_NAME);
+            const KEY_DIA_DIEM = getKey(DIA_DIEM_HEADER_NAME);
+
+            if (EXAM_DATA.length === 0) return;
+
+            if (rawTerms.length === 0) {
+                resultStats.innerText = EXAM_DATA.length;
+                displayResults(EXAM_DATA, []);
+                return;
+            }
+
+            const filteredData = EXAM_DATA.filter(row => {
+                const valMaMon = normalizeSearchString(row[KEY_MA_MON]);
+                const valMonThi = normalizeSearchString(row[KEY_MON_THI]);
+                const valKhoi = normalizeSearchString(row[KEY_KHOI]);
+                const valNgay = normalizeSearchString(excelDateToJS(row[KEY_NGAY]));
+                const valDiaDiem = normalizeSearchString(row[KEY_DIA_DIEM]);
+
+                return rawTerms.some(term => {
+                    const { maMon: searchMaMon, khoiThi: searchKhoiLetter } = splitSearchTerm(term);
+                    let match = false;
+                    if (valMaMon.includes(term) || valMonThi.includes(term) || valNgay.includes(term) || valDiaDiem.includes(term)) match = true;
+                    if (!match && searchKhoiLetter && valMaMon.includes(searchMaMon)) {
+                        const inBracket = valKhoi.match(/\((.*?)\)/);
+                        if (inBracket) {
+                            const sections = inBracket[1].split(/[\s\-,]+/).filter(Boolean);
+                            if (sections.includes(searchKhoiLetter)) match = true;
+                        }
+                    }
+                    return match;
+                });
+            });
+
+            resultStats.innerText = filteredData.length;
+            displayResults(filteredData, rawTerms);
+        }
+
+        function displayResults(data, searchTerms) {
+            const tbody = document.querySelector('#resultTable tbody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Không tìm thấy kết quả</td></tr>`;
+                return;
+            }
+
+            const getKey = (partialName) => HEADERS.find(h => normalizeHeaderName(h).toUpperCase().includes(partialName.toUpperCase())) || partialName;
+
+            const kStt = getKey(STT_HEADER_NAME);
+            const kNgay = getKey(NGAY_THI_HEADER_NAME);
+            const kGio = getKey(GIO_THI_HEADER_NAME);
+            const kKhoi = getKey(KHOI_THI_HEADER_NAME);
+            const kDiaDiem = getKey(DIA_DIEM_HEADER_NAME);
+            const kMaMon = getKey(MA_MON_HEADER_NAME);
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const rowMaMon = String(row[kMaMon] || '').toUpperCase();
+                let lettersToHighlight = [];
+                searchTerms.forEach(term => {
+                    const { maMon, khoiThi } = splitSearchTerm(term);
+                    if (khoiThi && rowMaMon.includes(maMon)) lettersToHighlight.push(khoiThi);
+                });
+                const highlightRegex = lettersToHighlight.length > 0 ? new RegExp(`\\b(${lettersToHighlight.join('|')})\\b`, 'gi') : null;
+
+                const tdStt = document.createElement('td'); tdStt.textContent = row[kStt] || ''; tr.appendChild(tdStt);
+                const tdNgay = document.createElement('td'); tdNgay.textContent = excelDateToJS(row[kNgay]) || ''; tr.appendChild(tdNgay);
+                const tdGio = document.createElement('td'); tdGio.textContent = row[kGio] || ''; tr.appendChild(tdGio);
+                const tdKhoi = document.createElement('td');
+                const valKhoi = String(row[kKhoi] || '');
+                if (highlightRegex) { tdKhoi.innerHTML = valKhoi.replace(highlightRegex, '<mark>$1</mark>'); tdKhoi.classList.add('highlight-khoithi'); } else { tdKhoi.textContent = valKhoi; }
+                tr.appendChild(tdKhoi);
+                const tdDiaDiem = document.createElement('td'); tdDiaDiem.textContent = row[kDiaDiem] || ''; tr.appendChild(tdDiaDiem);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function excelDateToJS(serial) {
+            if (typeof serial === 'number' && serial > 1000) {
+                const date = new Date((serial - 25569) * 86400 * 1000);
+                return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+            }
+            return serial;
+        }
+
+        function hideModal() { document.getElementById('modalContainer').classList.remove('show'); }
+        function showModal(title, msg) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerHTML = msg;
+            document.getElementById('modalContainer').classList.add('show');
+        }
+
+        // --- HÀM CHỤP ẢNH (UPDATE THÊM FOOTER) ---
+        function copyTableImageToClipboard() {
+            const tableWrapper = document.getElementById('tableWrapper');
+            const btn = document.querySelector('.copy-button');
+            const now = new Date();
+
+            if (document.querySelectorAll('#resultTable tbody tr').length <= 1 && document.querySelector('.loading')) return;
+
+            btn.disabled = true; btn.innerHTML = "⏳...";
+
+            // 1. Set Tiêu đề cho ảnh
+            const currentTitle = document.getElementById('dynamicTitle').innerText;
+            document.getElementById('exportTitleText').innerText = currentTitle;
+
+            // 2. Hiện Header và Footer
+            document.getElementById('exportHeader').style.display = 'block';
+            document.getElementById('exportFooter').style.display = 'block'; // Hiện footer
+            document.getElementById('exportTimeText').innerText = `Thời gian tra cứu: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} - ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+
+            // 3. Mở rộng bảng
+            const oldScroll = tableWrapper.scrollTop;
+            tableWrapper.classList.add('capturing');
+
+            // 4. Chụp
+            setTimeout(() => {
+                html2canvas(document.getElementById('captureArea'), { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' })
+                    .then(canvas => {
+                        // 5. Ẩn lại sau khi chụp
+                        document.getElementById('exportHeader').style.display = 'none';
+                        document.getElementById('exportFooter').style.display = 'none'; // Ẩn footer
+                        tableWrapper.classList.remove('capturing');
+                        tableWrapper.scrollTop = oldScroll;
+                        btn.disabled = false; btn.innerHTML = "📷 Chụp";
+
+                        canvas.toBlob(blob => {
+                            const item = new ClipboardItem({ "image/png": blob });
+                            navigator.clipboard.write([item]).then(() => showModal("Thành công ✅", "Đã copy ảnh!")).catch(() => showModal("Lỗi ❌", "Trình duyệt không hỗ trợ."));
+                        });
+                    });
+            }, 200);
+        }
+    </script>
+</body>
+
+</html>

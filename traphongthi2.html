@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <script src="guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem lịch thi</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --bg: #f0f2f5;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --orange: #e67e22;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 8px;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .header-controls {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 12px 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-paste {
+            background: var(--success);
+        }
+
+        .btn-upload {
+            background: var(--orange);
+        }
+
+        .btn-clear {
+            background: var(--danger);
+        }
+
+        .marquee-container {
+            background: #fff3e0;
+            border-radius: 6px;
+            padding: 8px 0;
+            overflow: hidden;
+            display: flex;
+            border: 1px solid #ffcc80;
+        }
+
+        .marquee-content {
+            display: flex;
+            white-space: nowrap;
+            animation: marquee-infinite 35s linear infinite;
+        }
+
+        .marquee-content:hover {
+            animation-play-state: paused;
+        }
+
+        .text-item {
+            padding-right: 60px;
+            color: #d35400;
+            font-weight: bold;
+            font-size: 13.5px;
+        }
+
+        @keyframes marquee-infinite {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .viewer-container {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #ddd;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .excel-mode {
+            height: calc(100% + 65px);
+            margin-top: -40px;
+        }
+
+        #placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #999;
+            text-align: center;
+            width: 90%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-controls">
+        <div class="input-row">
+            <button type="button" class="btn-paste" onclick="pasteAndLoad()">🚀 DÁN</button>
+            <input type="text" id="fileUrl" placeholder="Dán link hoặc chọn file..." autocomplete="off">
+
+            <input type="file" id="fileInput" hidden accept=".pdf,.xlsx,.xls" onchange="handleFileUpload(this)">
+            <button type="button" class="btn-upload" onclick="document.getElementById('fileInput').click()">📁 TẢI
+                FILE</button>
+
+            <button type="button" class="btn-clear" onclick="clearLink()">🗑️ XÓA</button>
+        </div>
+
+        <div class="marquee-container">
+            <div class="marquee-content">
+                <div class="text-item">
+                    🔗 HỖ TRỢ EXCEL & PDF: Dán link từ trang PĐT hoặc bấm "TẢI FILE" để chọn file từ máy. 💡 MẸO: Với
+                    Excel, dùng Kính lúp 🔍. Với PDF, nhấn Ctrl+F để tìm MSSV nhanh hơn.
+                </div>
+                <div class="text-item">
+                    🔗 HỖ TRỢ EXCEL & PDF: Dán link từ trang PĐT hoặc bấm "TẢI FILE" để chọn file từ máy. 💡 MẸO: Với
+                    Excel, dùng Kính lúp 🔍. Với PDF, nhấn Ctrl+F để tìm MSSV nhanh hơn.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="viewer-container">
+        <div id="placeholder">
+            <b>Hệ thống đang chờ link hoặc file danh sách thi...</b>
+        </div>
+        <iframe id="fileViewer" src="" style="display: none;"></iframe>
+    </div>
+
+    <script>
+        // Lưu trữ URL tạm thời để giải phóng bộ nhớ
+        let currentObjectUrl = null;
+
+        async function pasteAndLoad() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && (text.includes('http'))) {
+                    document.getElementById('fileUrl').value = text;
+                    loadContent();
+                } else {
+                    alert('Nội dung đã chép không chứa link!');
+                }
+            } catch (err) {
+                alert('Vui lòng cho phép truy cập Clipboard.');
+            }
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Xóa URL cũ nếu có để tránh rò rỉ bộ nhớ
+            if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+
+            document.getElementById('fileUrl').value = `File: ${file.name}`;
+            currentObjectUrl = URL.createObjectURL(file);
+
+            const isPdf = file.name.toLowerCase().endsWith('.pdf');
+            displayFile(currentObjectUrl, isPdf, true);
+        }
+
+        function clearLink() {
+            document.getElementById('fileUrl').value = '';
+            document.getElementById('fileInput').value = '';
+            if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+
+            const viewer = document.getElementById('fileViewer');
+            const placeholder = document.getElementById('placeholder');
+            viewer.src = '';
+            viewer.style.display = 'none';
+            viewer.classList.remove('excel-mode');
+            placeholder.style.display = 'block';
+        }
+
+        function loadContent() {
+            const url = document.getElementById('fileUrl').value.trim();
+            if (!url || url.startsWith('File: ')) return;
+
+            const isPdf = url.toLowerCase().split('?')[0].endsWith('.pdf');
+            displayFile(url, isPdf, false);
+        }
+
+        function displayFile(url, isPdf, isLocalFile) {
+            const viewer = document.getElementById('fileViewer');
+            const placeholder = document.getElementById('placeholder');
+            let finalUrl = "";
+
+            if (isPdf) {
+                // Nếu là file PDF cục bộ, hiển thị trực tiếp bằng trình duyệt. 
+                // Nếu là link web, dùng Google Viewer.
+                finalUrl = isLocalFile ? url : `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+                viewer.classList.remove('excel-mode');
+            } else {
+                // Với Excel: Chỉ hiển thị được qua Office Online nếu có link web. 
+                // Lưu ý: File Excel cục bộ không thể xem trực tiếp qua iframe Office Online.
+                if (isLocalFile) {
+                    alert("Lưu ý: Trình xem trực tuyến không hỗ trợ xem trực tiếp file Excel từ máy tính vì lý do bảo mật của Microsoft. Vui lòng sử dụng Link hoặc chuyển file sang PDF.");
+                    clearLink();
+                    return;
+                }
+                const officeParams = '&wdInNav=0&activeCell=A1&wdActiveSheet=Sheet1';
+                finalUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(url)}${officeParams}`;
+                viewer.classList.add('excel-mode');
+            }
+
+            placeholder.style.display = 'none';
+            viewer.style.display = 'block';
+            viewer.src = finalUrl;
+        }
+
+        document.getElementById('fileUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadContent();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <script src="guard.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DTU Maps</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .btn-hover {
+      transition: all 0.3s ease;
+    }
+
+    .btn-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .select-hover {
+      transition: all 0.3s ease;
+    }
+
+    .select-hover:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .spinner {
+      display: none;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    .bg-map {
+      background-image: linear-gradient(to bottom right, rgba(147, 197, 253, 0.2), rgba(59, 130, 246, 0.1)),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200  200"><path d="M40 60 L160 60 L100 140 Z" fill="none" stroke="#93c5fd" stroke-width="3"/><circle cx="100" cy="100" r="8" fill="#1e40af"/><path d="M20 180 L180 180 M20 20 L180 20 M20 20 L20 180 M180 20 L180 180" stroke="#dbeafe" stroke-width="1.5"/></svg>');
+
+      background-size: 200px 200px;
+      background-repeat: repeat;
+    }
+
+    .content-bg {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-map flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-md animate-fadeIn" role="region" aria-labelledby="app-title">
+    <h1 id="app-title" class="text-3xl font-extrabold text-center text-blue-800 mb-6 content-bg">DTU Maps</h1>
+
+    <div class="mb-6 flex justify-center">
+      <svg class="w-16 h-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
+        </path>
+      </svg>
+    </div>
+
+    <select id="destinationSelect"
+      class="w-full p-3 mb-4 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 select-hover content-bg"
+      aria-label="Chọn địa điểm đến">
+      <option value="">-- Chọn địa điểm đến --</option>
+    </select>
+
+    <button id="navigateButton" onclick="openGoogleMaps()"
+      class="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold btn-hover hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center content-bg"
+      aria-label="Mở Google Maps để chỉ đường">
+      <span class="spinner" id="spinner"></span>
+      <span id="buttonText">🚗 Chỉ đường ngay</span>
+    </button>
+
+    <p id="errorMessage" class="text-red-500 text-sm mt-2 hidden content-bg" role="alert"></p>
+  </div>
+  <script>
+    const destinations = [
+      { name: "137 Nguyễn Văn Linh", place: "137 Đ. Nguyễn Văn Linh, Thạc Gián, Thanh Khê, Đà Nẵng 550000, Việt Nam" },
+      { name: "254 Nguyễn Văn Linh", place: "254 Đ. Nguyễn Văn Linh, Thạc Gián, Thanh Khê, Đà Nẵng 550000, Việt Nam" },
+      { name: "209 Phan Thanh", place: "209 Phan Thanh, Thạc Gián, Thanh Khê, Đà Nẵng 550000, Việt Nam" },
+      { name: "Hòa Khánh Nam", place: "120 Hoàng Minh Thảo, Hoà Khánh Nam, Liên Chiểu, Đà Nẵng 550000, Việt Nam" },
+      { name: "Phan Văn Trị", place: "78 Phan Văn Trị, Khuê Trung, Cẩm Lệ, Đà Nẵng 55000, Việt Nam" },
+      { name: "03 Quang Trung", place: "3 Quang Trung, Hải Châu, Đà Nẵng 550000, Việt Nam" },
+      { name: "K7/25 Quang Trung", place: "03 Quang Trung, Hải Châu, Đà Nẵng 550000, Việt Nam" },
+    ];
+
+    const select = document.getElementById('destinationSelect');
+    const navigateButton = document.getElementById('navigateButton');
+    const spinner = document.getElementById('spinner');
+    const buttonText = document.getElementById('buttonText');
+    const errorMessage = document.getElementById('errorMessage');
+
+    destinations.forEach((dest, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = dest.name;
+      select.appendChild(option);
+    });
+
+    let currentPosition = null;
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => errorMessage.classList.add('hidden'), 5000);
+    }
+
+    function getCurrentLocation(callback) {
+      if (navigator.geolocation) {
+        navigateButton.disabled = true;
+        spinner.style.display = 'inline-block';
+        buttonText.textContent = 'Đang lấy vị trí...';
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            currentPosition = `${position.coords.latitude},${position.coords.longitude}`;
+            navigateButton.disabled = false;
+            spinner.style.display = 'none';
+            buttonText.textContent = 'Chỉ đường (Mở Google Maps)';
+            callback(true);
+          },
+          error => {
+            let message = 'Không thể lấy vị trí. Vui lòng thử lại.';
+            if (error.code === error.PERMISSION_DENIED) {
+              message = 'Vui lòng cấp quyền truy cập vị trí để tiếp tục.';
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+              message = 'Không thể xác định vị trí của bạn.';
+            }
+            showError(message);
+            navigateButton.disabled = false;
+            spinner.style.display = 'none';
+            buttonText.textContent = 'Chỉ đường (Mở Google Maps)';
+            callback(false);
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
+      } else {
+        showError('Trình duyệt không hỗ trợ lấy vị trí.');
+        navigateButton.disabled = false;
+        spinner.style.display = 'none';
+        buttonText.textContent = 'Chỉ đường (Mở Google Maps)';
+        callback(false);
+      }
+    }
+
+    function openGoogleMaps() {
+      const destIndex = select.value;
+      if (destIndex === "") {
+        showError('Vui lòng chọn địa điểm đến.');
+        return;
+      }
+
+      getCurrentLocation(success => {
+        if (success) {
+          const destination = destinations[destIndex].place;
+          const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${currentPosition}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+          window.open(mapsUrl, '_blank');
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

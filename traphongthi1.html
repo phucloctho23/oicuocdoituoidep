@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <script src="guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRA PHÒNG THI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --dtu-red: #d32f2f;
+            --bg-page: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        /* --- CẤU HÌNH THANH CUỘN (SCROLLBAR) MỚI --- */
+        /* Cho phép cuộn mượt mà */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho Webkit (Chrome, Edge, Safari) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 10px;
+            /* Chiều cao cho thanh cuộn ngang */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg-page);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        @media (min-width: 851px) {
+            .app-container {
+                display: grid;
+                grid-template-columns: 340px 1fr;
+                height: 100vh;
+                width: 100vw;
+            }
+
+            .sidebar {
+                height: 100vh;
+                overflow-y: auto;
+                border-right: 1px solid #ddd;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Main content cho phép cuộn ngang (auto) */
+            .main-content {
+                height: 100vh;
+                overflow-x: auto;
+                /* Hiện thanh cuộn khi cần */
+                overflow-y: hidden;
+                display: flex;
+                align-items: flex-start;
+                gap: 25px;
+                white-space: nowrap;
+                padding-bottom: 20px;
+                /* Chừa chỗ cho thanh cuộn */
+            }
+
+            .card {
+                min-width: 400px;
+                max-width: 420px;
+            }
+
+            .input-wrapper {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+
+            textarea#mssvIn {
+                flex: 1;
+                height: 100%;
+                resize: none;
+            }
+        }
+
+        @media (max-width: 850px) {
+            .app-container {
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+                overflow-y: auto;
+            }
+
+            .sidebar {
+                height: auto;
+                border-bottom: 5px solid #eee;
+                padding-bottom: 30px;
+                flex-shrink: 0;
+            }
+
+            textarea#mssvIn {
+                min-height: 150px;
+                height: 150px;
+            }
+
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                padding: 15px;
+                overflow: visible;
+                flex-shrink: 0;
+            }
+
+            .card {
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            .guide-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .guide-container {
+                width: 100% !important;
+                padding: 20px !important;
+            }
+        }
+
+        .sidebar {
+            background: #fff;
+            padding: 20px;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            color: var(--dtu-red);
+            font-weight: 900;
+            text-align: center;
+            margin: 0 0 10px 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #444;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1.5px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            box-sizing: border-box;
+        }
+
+        textarea#mssvIn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #333;
+            box-sizing: border-box;
+            overflow-y: auto;
+            /* Cho phép cuộn dọc trong ô nhập */
+        }
+
+        textarea#mssvIn:focus {
+            border-color: var(--dtu-red);
+            outline: none;
+            background: #fffcfc;
+        }
+
+        .suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 2px;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
+            text-align: left;
+        }
+
+        .suggestion-item:hover {
+            background: #fff0f0;
+            color: var(--dtu-red);
+        }
+
+        .match-text {
+            color: var(--dtu-red);
+        }
+
+        .btn-paste {
+            width: 100%;
+            margin-top: 5px;
+            background: var(--dtu-red);
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-clear-link {
+            background: #eee;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .btn-del-all {
+            width: 100%;
+            margin-top: 8px;
+            background: #fff0f0;
+            color: var(--dtu-red);
+            border: 1px solid #ffcdd2;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .file-box {
+            border: 2px dashed #ccc;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .main-content {
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .guide-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .guide-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .guide-title {
+            font-size: 20px;
+            color: var(--dtu-red);
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .guide-step {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+        .guide-head {
+            font-weight: 900;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .guide-body {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .hl {
+            color: var(--dtu-red);
+            font-weight: bold;
+            background: #fff0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .guide-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .copyright-text {
+            color: var(--dtu-red);
+            font-weight: 900;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .qr-code {
+            width: 350px;
+            height: 350px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            background: #fff;
+            padding: 5px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+            margin-bottom: 0;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .c-header {
+            background: var(--dtu-red);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 16px;
+        }
+
+        .c-body {
+            padding: 20px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .val {
+            font-weight: 800;
+            color: #000;
+            text-align: right;
+            max-width: 65%;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .hl-box {
+            background: #fffdeb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ffe58f;
+            margin-top: 15px;
+        }
+
+        .warn {
+            color: red !important;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .btn-shot {
+            width: 100%;
+            padding: 12px;
+            background: #2d3436;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+
+        #toast-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            background: #fff;
+            border-left: 5px solid #333;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            animation: slideInRight 0.3s;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .t-ok {
+            border-color: #00b894;
+        }
+
+        .t-err {
+            border-color: #d63031;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-box"></div>
+    <div class="app-container">
+        <div class="sidebar">
+            <h2>TRA PHÒNG THI NHANH</h2>
+            <div style="margin-bottom: 10px;">
+                <label class="label">1. Dán Link Online:</label>
+                <div style="display:flex;">
+                    <input type="text" id="urlIn" placeholder="Link PDF/Excel..." autocomplete="off">
+                    <button class="btn-clear-link" onclick="resetAll()" title="Xóa Link">✕</button>
+                </div>
+                <button class="btn-paste" id="btnLink" onclick="pasteAndLoad()">🚀 DÁN</button>
+            </div>
+            <div style="text-align:center; font-size:10px; color:#aaa; font-weight:bold; margin: 5px 0;">--- HOẶC ---
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label class="label">2. Tải File Từ Máy:</label>
+                <div class="file-box"><input type="file" id="fileIn" accept=".xlsx, .xls, .pdf"></div>
+            </div>
+            <hr style="width:100%; border:0; border-top:1px solid #eee; margin-bottom: 15px;">
+            <div class="input-wrapper">
+                <label class="label" style="color:var(--dtu-red);">3. Nhập MSSV (Dán nhiều dòng):</label>
+                <textarea id="mssvIn" inputmode="decimal"
+                    placeholder="Nhập MSSV (Phân cách bằng Enter, dấu phẩy, hoặc chấm)..." disabled></textarea>
+                <div id="suggestions" class="suggestion-list"></div>
+                <button class="btn-del-all" onclick="clearMSSVOnly()">🗑️ XÓA DANH SÁCH</button>
+            </div>
+        </div>
+
+        <div class="main-content" id="resultArea">
+            <div id="guideView" class="guide-wrapper">
+                <div class="guide-container">
+                    <div class="guide-title">Hướng Dẫn Sử Dụng</div>
+                    <div class="guide-grid">
+                        <div class="guide-step">
+                            <div class="guide-head" style="color:#2980b9;">🔗 CÁCH 1: DÙNG LINK</div>
+                            <div class="guide-body">1. Vào trang danh sách thi tại phòng đào tạo Duy Tân.<br>2. Chuột
+                                phải tên file lịch
+                                thi.<br>3. Chọn <span class="hl">Sao chép địa chỉ liên kết</span>.<br>4. Dán vào ô số 1
+                                và ấn <b>🚀 DÁN</b>.</div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="guide-head" style="color:#27ae60;">📂 CÁCH 2: DÙNG FILE</div>
+                            <div class="guide-body">1. Tải file Excel/PDF về máy.<br>2. Bấm vào ô số 2 <span
+                                    class="hl">Chọn tệp</span> để tải lên.<br><i>(Dùng khi link bị lỗi).</i></div>
+                        </div>
+                    </div>
+                    <div class="guide-footer">
+                        <div class="copyright-text">Bản quyền thuộc Tân và https://t.me/s/Dai_Hoc_Duy_Tan</div>
+                        <img src="maqrtelegram1.jpg" class="qr-code" alt="QR Telegram"
+                            onerror="this.style.display='none'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        let db = []; let isPDF = false; let processedExams = new Set();
+
+        window.onload = () => { resetAll(); }
+
+        function toast(msg, type = 't-ok') {
+            const b = document.getElementById('toast-box');
+            const d = document.createElement('div');
+            d.className = `toast ${type}`; d.innerText = msg;
+            b.appendChild(d); setTimeout(() => d.remove(), 3000);
+        }
+
+        function resetAll() { document.getElementById('urlIn').value = ''; document.getElementById('fileIn').value = ''; clearMSSVOnly(); }
+
+        function clearMSSVOnly() {
+            document.getElementById('mssvIn').value = '';
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('mssvIn').focus();
+            showGuide(true);
+        }
+
+        function showGuide(show) {
+            const area = document.getElementById('resultArea'); const guide = document.getElementById('guideView');
+            if (show) { Array.from(area.children).forEach(child => { if (child.id !== 'guideView') area.removeChild(child); }); guide.style.display = 'flex'; } else { guide.style.display = 'none'; }
+        }
+
+        async function pasteAndLoad() {
+            try { const t = await navigator.clipboard.readText(); if (t) document.getElementById('urlIn').value = t; } catch (e) { }
+            const url = document.getElementById('urlIn').value.trim();
+            const btn = document.getElementById('btnLink');
+            if (url.length < 5) return toast("Link lỗi!", "t-err");
+            clearMSSVOnly(); btn.disabled = true; btn.innerText = "⏳...";
+            const proxies = [`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, `https://corsproxy.io/?${encodeURIComponent(url)}`, `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`];
+            let success = false;
+            for (let p of proxies) {
+                try {
+                    const res = await fetch(p); if (!res.ok) throw new Error();
+                    const blob = await res.blob(); if (blob.type.includes("html") && blob.size < 5000) throw new Error();
+                    isPDF = url.toLowerCase().includes(".pdf"); if (isPDF) await parsePDF(blob); else await parseExcel(blob);
+                    success = true; break;
+                } catch (e) { }
+            }
+            btn.disabled = false; btn.innerText = "🚀 DÁN";
+            if (!success) { toast("❌ Link chặn. Tải file về máy!", "t-err"); window.open(url, '_blank'); }
+        }
+
+        document.getElementById('fileIn').addEventListener('change', async (e) => {
+            const f = e.target.files[0]; if (!f) return;
+            clearMSSVOnly(); isPDF = f.name.toLowerCase().endsWith(".pdf");
+            try { if (isPDF) await parsePDF(f); else await parseExcel(f); } catch (e) { toast("Lỗi file!", "t-err"); }
+        });
+
+        // --- HÀM EXCEL MỚI: FIX LỖI SỐ DÒNG (DÙNG !ref) ---
+        async function parseExcel(blob) {
+            const data = await blob.arrayBuffer();
+            const wb = XLSX.read(data, { type: 'array' });
+            db = [];
+
+            wb.SheetNames.forEach(sheetName => {
+                const sheet = wb.Sheets[sheetName];
+                // Tính toán dòng bắt đầu dựa trên vùng dữ liệu (Range)
+                // Ví dụ: A3:E100 -> startRow = 2 (dòng 3)
+                let startRow = 0;
+                if (sheet['!ref']) {
+                    const range = XLSX.utils.decode_range(sheet['!ref']);
+                    startRow = range.s.r;
+                }
+
+                const sheetData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+                sheetData.forEach((row, index) => {
+                    row._sheetName = sheetName;
+                    // CHỈNH LẠI CÁCH TÍNH SỐ DÒNG
+                    row._realRowIndex = startRow + index + 1;
+                    db.push(row);
+                });
+            });
+            toast(`📂 Đã nạp ${wb.SheetNames.length} môn thi`, "t-ok"); enableInput();
+        }
+
+        async function parsePDF(blob) {
+            const data = await blob.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data) }).promise;
+            let tmp = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const p = await pdf.getPage(i);
+                const c = await p.getTextContent();
+                const l = {};
+                c.items.forEach(it => {
+                    const y = Math.round(it.transform[5] / 2) * 2;
+                    if (!l[y]) l[y] = [];
+                    l[y].push(it);
+                });
+                Object.keys(l).sort((a, b) => b - a).forEach(y => {
+                    let row = l[y].sort((a, b) => a.transform[4] - b.transform[4]).map(x => x.str.trim()).filter(s => s !== "");
+
+                    // CHUẨN HÓA CHO PDF: Gắn nhãn để renderCard nhận biết
+                    row._isPDF = true;
+                    row._sheetName = `Trang ${i}`;
+                    tmp.push(row);
+                });
+            }
+            db = tmp;
+            toast(`📂 Đã nạp PDF (${pdf.numPages} trang)`, "t-ok");
+            enableInput();
+        }
+
+        function enableInput() { document.getElementById('mssvIn').disabled = false; document.getElementById('mssvIn').focus(); }
+
+        const inputEl = document.getElementById('mssvIn');
+        const suggestDiv = document.getElementById('suggestions');
+
+        inputEl.addEventListener('input', (e) => {
+            let val = e.target.value;
+            val = val.replace(/[^0-9\n.,]/g, '');
+            e.target.value = val;
+            const tokens = val.split(/[^0-9]+/);
+            const lastToken = tokens[tokens.length - 1];
+            handleSuggestions(lastToken);
+            autoSearch(val);
+        });
+
+        function handleSuggestions(val) {
+            if (!val || !db.length || val.length < 3) { suggestDiv.style.display = "none"; return; }
+            const matches = new Set();
+            for (let row of db) {
+                let mssvCell = row.find(c => !isNaN(String(c)) && String(c).length > 5);
+                if (mssvCell) {
+                    let s = String(mssvCell).trim();
+                    if (s.startsWith(val)) matches.add(s);
+                }
+                if (matches.size >= 5) break;
+            }
+            if (matches.size > 0) {
+                suggestDiv.innerHTML = ""; suggestDiv.style.display = "block";
+                matches.forEach(m => {
+                    const d = document.createElement('div'); d.className = 'suggestion-item';
+                    d.innerHTML = `<span class="match-text">${val}</span>${m.substring(val.length)}`;
+                    d.onclick = () => {
+                        let currentText = inputEl.value;
+                        inputEl.value = currentText.replace(/\d+$/, m);
+                        suggestDiv.style.display = "none";
+                        autoSearch(inputEl.value);
+                        inputEl.focus();
+                    };
+                    suggestDiv.appendChild(d);
+                });
+            } else suggestDiv.style.display = "none";
+        }
+
+        function autoSearch(val) {
+            const keys = val.split(/[^0-9]+/).filter(k => k.length >= 3);
+            if (keys.length === 0) { showGuide(true); return; }
+
+            const guide = document.getElementById('guideView'); if (guide) guide.style.display = 'none';
+            const area = document.getElementById('resultArea');
+            Array.from(area.children).forEach(child => { if (child.id !== 'guideView') area.removeChild(child); });
+
+            processedExams.clear();
+
+            db.forEach((row) => {
+                const matchKey = keys.find(k => {
+                    return row.some(cell => {
+                        const s = String(cell).trim();
+                        return s === k || (k.length >= 5 && s.endsWith(k) && s.length >= 5);
+                    });
+                });
+                if (matchKey) renderCard(row, matchKey);
+            });
+        }
+
+        function renderCard(row, matchedKey) {
+            let sheetName = row._sheetName || "Danh sách chung";
+            let d = "---", t = "---", p = "---", cs = "Chưa xác định";
+
+            // 1. DÒ THÔNG TIN PHÒNG & CƠ SỞ (QUÉT NGƯỢC)
+            // 1. DÒ THÔNG TIN PHÒNG & CƠ SỞ (QUÉT NGƯỢC)
+            let dbIdx = db.indexOf(row);
+            for (let j = dbIdx; j >= Math.max(0, dbIdx - 100); j--) {
+                let rStr = db[j].join(" ").toUpperCase();
+
+                // Lấy Ngày/Giờ
+                if (d === "---") { let dMatch = rStr.match(/(\d{1,2}\/\d{1,2}\/\d{4})/); if (dMatch) d = dMatch[1]; }
+                if (t === "---") { let tMatch = rStr.match(/(\d{1,2}H\d{2})/); if (tMatch) t = tMatch[1]; }
+
+                // --- LOGIC MỚI ĐỂ TÁCH PHÒNG THI ---
+                if (p === "---" && rStr.includes("PHÒNG:")) {
+                    // Tách lấy phần sau chữ "PHÒNG:"
+                    let rawRoom = rStr.split(/PHÒNG:?/i)[1] || "";
+
+                    // Tách dựa trên dấu gạch ngang (-) hoặc các từ khóa cơ sở để lấy phần tên phòng
+                    // Regex này sẽ dừng lại ngay khi gặp các từ khóa cơ sở hoặc dấu gạch ngang có khoảng trắng bao quanh
+                    let parts = rawRoom.split(/\s*-\s*(?=254|NGUYỄN VĂN LINH|HÒA KHÁNH|QUANG TRUNG|PHAN THANH|CƠ SỞ|3\.5HA)/i);
+
+                    if (parts[0]) {
+                        p = parts[0].trim();
+                        // Xử lý thêm nếu vẫn còn sót dấu gạch ngang ở cuối (ví dụ: "Nhà G- 209-")
+                        p = p.replace(/-$/, "").trim();
+                    }
+                }
+
+                // Lấy tên Cơ sở
+                if (cs === "Chưa xác định") {
+                    if (rStr.includes("QUANG TRUNG")) cs = "K7/25 Quang Trung";
+                    else if (rStr.includes("NGUYỄN VĂN LINH") || rStr.includes("254 NVL") || rStr.includes("254 NGUYỄN VĂN LINH")) cs = "254 Nguyễn Văn Linh";
+                    else if (rStr.includes("HÒA KHÁNH") || rStr.includes("HK") || rStr.includes("3.5HA")) cs = "3.5ha Hòa Khánh Nam";
+                    else if (rStr.includes("PHAN THANH")) cs = "209 Phan Thanh";
+                }
+            }
+
+            // 2. XÁC ĐỊNH THÔNG TIN SINH VIÊN
+            let msvIdx = row.findIndex(cell => {
+                let s = String(cell).trim();
+                return s === matchedKey || (matchedKey.length >= 5 && s.endsWith(matchedKey));
+            });
+
+            if (msvIdx === -1) return;
+
+            let msv = String(row[msvIdx]).trim();
+            let rowIdx = row._realRowIndex || (dbIdx + 1);
+            let stt = row[msvIdx - 1] || "";
+            let fullName = (String(row[msvIdx + 1] || "") + " " + String(row[msvIdx + 2] || "")).replace(/[0-9]/g, '').replace(/\s+/g, ' ').trim();
+
+            // Lấy Lớp HP và Lớp SH
+            let lopHP = String(row[5] || "").trim();
+            let lopSH = String(row[6] || "").trim();
+            let ghiChu = String(row[10] || row[11] || "").trim();
+            if (!lopHP || !lopSH) {
+                row.forEach(cell => {
+                    let s = String(cell).trim();
+                    if (/^K\d{2}/.test(s)) lopSH = s;
+                    else if (/[A-Z]{2,4}\s\d{3}/.test(s)) lopHP = s;
+                });
+            }
+
+            const area = document.getElementById('resultArea');
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.style.cssText = "background:#fff; border-radius:16px; overflow:hidden; width:100%; max-width:400px; box-sizing:border-box; margin: 0 auto; border: 1px solid #eee; display: flex; flex-direction: column;";
+
+            div.innerHTML = `
+        <div class="copyright-header" style="display:none; text-align:center; padding:10px 5px 0 5px; font-size:11px; font-weight:bold; color:#6c757d;">
+            Bản quyền thuộc Tân & https://t.me/Dai_Hoc_Duy_Tan
+        </div>
+
+        <div class="c-header" style="background:#d32f2f; color:white; padding:12px; text-align:center; font-weight:900; font-size:18px; text-transform:uppercase; margin-top:5px;">THÔNG TIN DỰ THI</div>
+        
+        <div class="c-body" style="padding:15px; display:flex; flex-direction:column; gap:12px; box-sizing:border-box; width: 100%;">
+            <div style="font-size:11px; color:#666; font-weight:bold;">📁 NGUỒN: ${sheetName}</div>
+
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1; border:1.5px solid #007bff; border-radius:15px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:#007bff; font-weight:900;">🗓️ NGÀY THI</div>
+                    <div style="font-size:16px; font-weight:900; color:#004085;">${d}</div>
+                </div>
+                <div style="flex:1; border:1.5px solid #fd7e14; border-radius:15px; padding:10px; text-align:center;">
+                    <div style="font-size:10px; color:#fd7e14; font-weight:900;">⏰ GIỜ THI</div>
+                    <div style="font-size:16px; font-weight:900; color:#856404;">${t}</div>
+                </div>
+            </div>
+
+            <div style="text-align:center;">
+                <div style="font-size:11px; color:#888; font-weight:bold;">PHÒNG THI</div>
+                <div style="font-size:38px; color:#d32f2f; font-weight:900; line-height:1;">${p}</div>
+                <div style="font-size:15px; color:#333; font-weight:800; margin-top:5px;">📍 CƠ SỞ: <span style="color:#d32f2f;">${cs}</span></div>
+            </div>
+
+            <div style="background:#28a745; color:#fff; border-radius:10px; padding:12px; text-align:center; font-weight:900; font-size:20px;">
+                <span style="font-size:11px; opacity:0.8; margin-right:5px;">MÃ SV:</span> ${msv}
+            </div>
+
+            <div style="border:1.5px solid #333; border-radius:12px; overflow:hidden; width: 100%;">
+                <table style="width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px;">
+                    <tr style="background:#f8f9fa; border-bottom:1.5px solid #333; font-weight:900;">
+                        <th style="padding:8px; border-right:1.5px solid #333; width:15%;">STT</th>
+                        <th style="padding:8px; border-right:1.5px solid #333; width:45%;">HỌ VÀ TÊN</th>
+                        <th style="padding:8px; border-right:1.5px solid #333; width:20%;">LỚP HP</th>
+                        <th style="padding:8px; width:20%;">LỚP SH</th>
+                    </tr>
+                    <tr style="text-align:center; font-weight:800;">
+                        <td style="padding:10px; border-right:1.5px solid #333; word-break: break-all;">${stt}</td>
+                        <td style="padding:10px; border-right:1.5px solid #333; line-height:1.2; white-space: normal; word-break: break-word;">${fullName}</td>
+                        <td style="padding:10px; border-right:1.5px solid #333; color:#16a085; font-size:10px; white-space: normal; word-break: break-all;">${lopHP}</td>
+                        <td style="padding:10px; color:#2980b9; font-size:10px; white-space: normal; word-break: break-all;">${lopSH}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 15px; background:#f3e5f5; border:1.5px dashed #6f42c1; border-radius:15px;">
+                <span style="font-weight:900; color:#6f42c1; font-size:16px;">VỊ TRÍ HÀNG</span>
+                <span style="font-size:35px; font-weight:900; color:#6f42c1;">${rowIdx}</span>
+            </div>
+
+            <div class="disclaimer-footer" style="display:none; margin-top:10px; padding:15px; background:#fffdeb; border:1px solid #ffe58f; border-radius:15px; font-size:11px; color:#856404; text-align:center; line-height:1.5; width: 100%; box-sizing: border-box;">
+                <div style="font-weight:900; margin-bottom:5px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                   ⚠️ MIỄN TRỪ TRÁCH NHIỆM
+                </div>
+                <div style="white-space: normal; word-break: break-word;">
+                    Thông tin mang tính chất tra cứu nhanh. Sinh viên vui lòng tự kiểm tra lại danh sách thi chính thức tại website Phòng Đào tạo để đảm bảo độ chính xác tuyệt đối.
+                </div>
+            </div>
+        </div>
+        ${ghiChu.toUpperCase().includes("NỢ HP") ? `
+        <div style="margin: 10px 15px; padding: 12px; background: #fff0f0; border: 2px solid #d32f2f; border-radius: 10px; color: #d32f2f; text-align: center; font-weight: bold; animation: blink 1s infinite;">
+            ⚠️ CẢNH BÁO: Bạn đang nợ học phí.
+        </div>
+    ` : ''}
+        <button class="btn-shot" style="background:#2c3e50; color:#fff; width:100%; border:none; padding:15px; font-weight:900; cursor:pointer; text-transform:uppercase; font-size:14px; margin-top: auto;" onclick="capture(this.parentElement)">📸 CHỤP ẢNH LƯU LẠI</button>
+    `;
+            area.appendChild(div);
+        }
+
+        async function capture(el) {
+            const btn = el.querySelector('button');
+            const copyright = el.querySelector('.copyright-header');
+            const disclaimer = el.querySelector('.disclaimer-footer');
+
+            // Hiện các phần ẩn khi chụp
+            btn.style.display = "none";
+            if (copyright) copyright.style.display = "block";
+            if (disclaimer) disclaimer.style.display = "block";
+
+            const originalAnimation = el.style.animation;
+            el.style.animation = "none";
+
+            const canvas = await html2canvas(el, { scale: 6, backgroundColor: "#ffffff", useCORS: true });
+
+            // Ẩn lại sau khi chụp xong
+            el.style.animation = originalAnimation;
+            if (copyright) copyright.style.display = "none";
+            if (disclaimer) disclaimer.style.display = "none";
+            btn.style.display = "block";
+
+            canvas.toBlob(blob => {
+                navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                toast("📸 Đã chụp và sao chép vào Clipboard!", "t-ok");
+            }, 'image/png', 1.0);
+        }
+    </script>
+</body>
+
+</html>

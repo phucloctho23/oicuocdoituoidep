@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <script src="guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Streams Đà Nẵng</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            color: white;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1. VÙNG VIDEO */
+        .video-grid {
+            flex-grow: 1;
+            height: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 2. ITEM VIDEO CƠ BẢN */
+        .grid-item {
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
+            border: none;
+            box-sizing: border-box;
+            background-color: #111;
+        }
+
+        .grid-item.active {
+            display: flex;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .video-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .video-title {
+            padding: 6px;
+            text-align: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .video-title span {
+            white-space: normal;
+            overflow-wrap: break-word;
+            flex-grow: 1;
+            padding-right: 5px;
+            text-align: center;
+        }
+
+        /* --- CSS MỚI CHO NÚT ICON --- */
+        .btn-toggle-mute {
+            background-color: transparent;
+            /* Nền trong suốt */
+            border: none;
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 24px;
+            /* Kích thước cố định */
+            height: 24px;
+            padding: 0;
+            /* Căn chỉnh icon vào giữa */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 20px 20px;
+            /* Kích thước icon */
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .btn-toggle-mute:hover {
+            opacity: 1;
+        }
+
+        /* Icon Tắt tiếng (Mặc định) */
+        .btn-toggle-mute[data-muted="true"] {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M3 9v6h4l5 5V4L7 9H3zm13.59 3L14 9.41 15.41 8 18 10.59 20.59 8 22 9.41 19.41 12 22 14.59 20.59 16 18 13.41 15.41 16 14 14.59 16.59 12z'/%3E%3C/svg%3E");
+        }
+
+        /* Icon Mở tiếng */
+        .btn-toggle-mute[data-muted="false"] {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/%3E%3C/svg%3E");
+        }
+
+        /* --- HẾT CSS MỚI --- */
+
+
+        /* 3. CHẾ ĐỘ CHIA TRANG (PAGINATED) */
+        .video-grid.paginated-mode {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+        }
+
+        .video-grid.paginated-mode .grid-item.active {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            width: auto;
+            top: auto;
+            left: auto;
+        }
+
+        /* 4. CHẾ ĐỘ LƯỚI 3x3 (GRID) */
+        .video-grid.grid-mode {
+            position: relative;
+            height: 100%;
+        }
+
+        .video-grid.grid-mode .grid-item {
+            display: flex;
+            position: absolute;
+            width: calc(100% / 3);
+            height: calc(100% / 3);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(1) {
+            top: 0;
+            left: 0;
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(2) {
+            top: 0;
+            left: calc(100% / 3);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(3) {
+            top: 0;
+            left: calc(100% / 3 * 2);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(4) {
+            top: calc(100% / 3);
+            left: 0;
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(5) {
+            top: calc(100% / 3);
+            left: calc(100% / 3);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(6) {
+            top: calc(100% / 3);
+            left: calc(100% / 3 * 2);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(7) {
+            top: calc(100% / 3 * 2);
+            left: 0;
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(8) {
+            top: calc(100% / 3 * 2);
+            left: calc(100% / 3);
+        }
+
+        .video-grid.grid-mode .grid-item:nth-child(9) {
+            top: calc(100% / 3 * 2);
+            left: calc(100% / 3 * 2);
+        }
+
+        /* 5. VÙNG ĐIỀU KHIỂN */
+        .controls {
+            position: static;
+            width: 100%;
+            background-color: #000;
+            padding: 8px 0;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            border-top: 1px solid #333;
+        }
+
+        .controls button {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .controls button:disabled {
+            background-color: #222;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .controls .page-indicator {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .grid-mode .pagination-controls,
+        .grid-mode #btn-show-all {
+            display: none;
+        }
+
+        .paginated-mode #btn-show-grid {
+            display: none;
+        }
+
+        /* 6. DI ĐỘNG */
+        @media (max-width: 768px) {
+            .video-grid.paginated-mode {
+                flex-direction: column;
+            }
+
+            .video-grid.paginated-mode .grid-item.active {
+                flex: 1;
+                height: 0;
+                width: 100%;
+            }
+
+            .video-title {
+                font-size: 0.7em;
+                padding: 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="video-grid paginated-mode">
+        <div class="grid-item">
+            <div class="video-container">
+                <iframe data-src="https://www.youtube.com/embed/SCpZOgLKVfY?autoplay=1&mute=1&controls=0&disablekb=1"
+                    title="Video 7" allow="autoplay" allowfullscreen></iframe>
+            </div>
+            <div class="video-title">
+                <span>Nha Trang</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <div class="pagination-controls">
+            <button id="btn-prev" disabled>&lt; Trước</button>
+            <span class="page-indicator" id="page-indicator">Trang 1 / X</span>
+            <button id="btn-next">Sau &gt;</button>
+        </div>
+
+        <button id="btn-show-all">Xem Toàn Bộ</button>
+        <button id="btn-show-grid" style="display: none;">Thu Gọn</button>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        const grid = document.querySelector('.video-grid');
+        const items = document.querySelectorAll('.grid-item');
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const pageIndicator = document.getElementById('page-indicator');
+
+        const btnShowAll = document.getElementById('btn-show-all');
+        const btnShowGrid = document.getElementById('btn-show-grid');
+
+        // --- 1. THÊM DÒNG NÀY ---
+        const paginationControls = document.querySelector('.pagination-controls');
+
+        // Tự động tính toán trang
+        const itemsPerPage = 3;
+        const totalItems = items.length;
+        let totalPages = Math.ceil(totalItems / itemsPerPage);
+        let currentPage = 1;
+
+        if (totalPages === 0) {
+            totalPages = 1;
+            currentPage = 1;
+        }
+
+        // --- LOGIC TỰ ĐỘNG THÊM NÚT ---
+        items.forEach(item => {
+            const videoTitleDiv = item.querySelector('.video-title');
+            const iframe = item.querySelector('iframe');
+
+            if (videoTitleDiv && !videoTitleDiv.querySelector('span')) {
+                videoTitleDiv.innerHTML = `<span>${videoTitleDiv.textContent.trim()}</span>`;
+            }
+
+            const oldBtn = item.querySelector('.btn-toggle-mute');
+            if (oldBtn) oldBtn.remove();
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn-toggle-mute';
+            toggleBtn.setAttribute('data-muted', 'true');
+
+            if (videoTitleDiv) {
+                videoTitleDiv.appendChild(toggleBtn);
+            }
+
+            if (toggleBtn && iframe) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isMuted = toggleBtn.getAttribute('data-muted') === 'true';
+                    let src = iframe.getAttribute('data-src');
+                    if (isMuted) {
+                        toggleBtn.setAttribute('data-muted', 'false');
+                        src = src.replace('&mute=1', '');
+                    } else {
+                        toggleBtn.setAttribute('data-muted', 'true');
+                        if (!src.includes('&mute=1')) {
+                            src += '&mute=1';
+                        }
+                    }
+                    if (iframe.getAttribute('src')) {
+                        iframe.src = src;
+                    }
+                });
+            }
+        });
+
+        // Tải video
+        function loadVideo(item) {
+            const iframe = item.querySelector('iframe');
+            const toggleBtn = item.querySelector('.btn-toggle-mute');
+            let src = iframe.getAttribute('data-src');
+            if (toggleBtn) {
+                const isMuted = toggleBtn.getAttribute('data-muted') === 'true';
+                if (isMuted) {
+                    if (!src.includes('&mute=1')) {
+                        src += '&mute=1';
+                    }
+                } else {
+                    src = src.replace('&mute=1', '');
+                }
+            }
+            if (iframe && !iframe.getAttribute('src')) {
+                iframe.src = src;
+            }
+        }
+
+        // Gỡ tải video
+        function unloadVideo(item) {
+            const iframe = item.querySelector('iframe');
+            if (iframe && iframe.getAttribute('src')) {
+                iframe.removeAttribute('src');
+            }
+        }
+
+        // Hiển thị trang
+        function showPage(page) {
+            currentPage = page;
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            items.forEach((item, index) => {
+                if (index >= startIndex && index < endIndex) {
+                    item.classList.add('active');
+                    loadVideo(item);
+                } else {
+                    item.classList.remove('active');
+                    unloadVideo(item);
+                }
+            });
+            pageIndicator.textContent = `Trang ${currentPage} / ${totalPages}`;
+            btnPrev.disabled = (currentPage === 1);
+            btnNext.disabled = (currentPage === totalPages);
+        }
+
+        // Chế độ "Xem Toàn Bộ"
+        function showGridMode() {
+            grid.classList.remove('paginated-mode');
+            grid.classList.add('grid-mode');
+            btnShowAll.style.display = 'none';
+            btnShowGrid.style.display = 'inline-block';
+
+            // --- 2. THÊM DÒNG NÀY (Để ẨN) ---
+            paginationControls.style.display = 'none';
+
+            items.forEach(item => loadVideo(item));
+        }
+
+        // Chế độ "Thu Gọn"
+        function showPaginatedMode() {
+            grid.classList.add('paginated-mode');
+            grid.classList.remove('grid-mode');
+            btnShowAll.style.display = 'inline-block';
+            btnShowGrid.style.display = 'none';
+
+            // --- 3. THÊM DÒNG NÀY (Để HIỆN) ---
+            paginationControls.style.display = 'block';
+
+            showPage(currentPage);
+        }
+
+        // Sự kiện cho các nút điều khiển
+        btnPrev.addEventListener('click', () => {
+            if (currentPage > 1) {
+                showPage(currentPage - 1);
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                showPage(currentPage + 1);
+            }
+        });
+
+        btnShowAll.addEventListener('click', showGridMode);
+        btnShowGrid.addEventListener('click', showPaginatedMode);
+
+        // Khởi chạy
+        showPage(1);
+    </script>
+
+</body>
+
+</html>
