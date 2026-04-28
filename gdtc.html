@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch thi GDTC - Duy Tân</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --primary-color: #d90429; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: var(--bg); display: flex; justify-content: center; padding: 10px; box-sizing: border-box; }
+        
+        .container { 
+            width: 100%; 
+            max-width: 1300px; 
+            background: #fff; 
+            padding: 15px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            display: flex; 
+            flex-direction: column; 
+            height: 96vh; 
+            box-sizing: border-box; 
+        }
+
+        h1 { color: var(--primary-color); text-align: center; font-size: 1.1rem; margin: 0 0 15px 0; text-transform: uppercase; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Search Box Wrapper */
+        .search-area { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; }
+        
+        .input-group { position: relative; flex: 1; display: flex; align-items: center; }
+        
+        .input-tag { 
+            background: #eee; color: var(--primary-color); font-weight: bold; 
+            height: 45px; padding: 0 12px; display: flex; align-items: center; 
+            border: 1px solid #ccc; border-right: none; border-radius: 8px 0 0 8px;
+            font-size: 14px;
+        }
+
+        input { 
+            flex: 1; height: 45px; padding: 0 60px 0 12px; 
+            border: 1px solid #ccc; border-radius: 0 8px 8px 0; 
+            outline: none; font-size: 16px; width: 100%; box-sizing: border-box;
+        }
+
+        /* Số đếm bên trong ô tìm kiếm */
+        .inner-count { 
+            position: absolute; right: 12px; color: var(--primary-color); 
+            font-weight: 800; font-size: 15px; pointer-events: none; 
+        }
+
+        .btn-cap { 
+            background: #6c5ce7; color: white; border: none; 
+            height: 45px; padding: 0 15px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; white-space: nowrap;
+            transition: 0.3s;
+        }
+        .btn-cap:active { transform: scale(0.95); }
+
+        /* Bảng dữ liệu */
+        .table-box { flex: 1; overflow: auto; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: var(--primary-color); color: white; position: sticky; top: 0; padding: 12px 8px; font-size: 12px; z-index: 10; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: center; font-size: 13.5px; }
+        tr:nth-child(even) { background: #fafafa; }
+        
+        .mon-col { text-align: left; padding-left: 10px; }
+        .lop-col { font-weight: bold; color: #000; }
+
+        /* Responsive cho Mobile */
+        @media (max-width: 600px) {
+            .container { padding: 10px; height: 98vh; }
+            h1 { font-size: 0.9rem; }
+            input { font-size: 14px; }
+            .btn-cap { padding: 0 10px; font-size: 12px; }
+            .input-tag { padding: 0 8px; font-size: 12px; }
+            td { font-size: 12px; padding: 8px 3px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="title">TRA CỨU LỊCH THI GDTC</h1>
+    
+    <div class="search-area">
+        <div class="input-group">
+            <div class="input-tag" id="tagMon">0</div>
+            <input type="text" id="inp" placeholder="Nhập lớp (VD: ES 101 DR, ES 101...)" oninput="search()">
+            <div class="inner-count" id="totalCount">0</div>
+        </div>
+        <button class="btn-cap" onclick="chup()">📸 ẢNH</button>
+    </div>
+
+    <div class="table-box">
+        <div id="area" style="background:white; padding:5px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="35">TT</th>
+                        <th width="90">NGÀY THI</th>
+                        <th width="80">GIỜ THI</th>
+                        <th>MÔN THI</th>
+                        <th width="120">LỚP THI</th>
+                        <th width="160">GIẢNG VIÊN</th>
+                        <th width="180">ĐỊA ĐIỂM</th>
+                    </tr>
+                </thead>
+                <tbody id="out">
+                    <tr><td colspan="7">Đang tải lịch thi...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GITHUB_URL = 'https://raw.githubusercontent.com/adminweba/crack/main/LICH%20THI%20GDTC.xls';
+    let dataStore = [];
+
+    async function init() {
+        try {
+            const r = await fetch(GITHUB_URL);
+            const ab = await r.arrayBuffer();
+            const wb = XLSX.read(new Uint8Array(ab), {type: 'array'});
+            const sh = wb.Sheets[wb.SheetNames[0]];
+            const raw = XLSX.utils.sheet_to_json(sh, {header: 1});
+
+            raw.slice(0, 10).forEach(row => {
+                row.forEach(c => { if(String(c).includes("GDTC")) document.getElementById('title').innerText = c; });
+            });
+
+            dataStore = [];
+            raw.forEach(row => {
+                let tt = parseInt(row[0]);
+                if (!isNaN(tt) && row.length > 5) {
+                    dataStore.push({
+                        tt: row[0],
+                        ngay: row[2],
+                        gio: row[3],
+                        mon: row[7], 
+                        lop: row[8],
+                        gv: row[10],
+                        dd: row[11]
+                    });
+                }
+            });
+            search();
+        } catch (e) {
+            document.getElementById('out').innerHTML = '<tr><td colspan="7" style="color:red">Lỗi kết nối dữ liệu!</td></tr>';
+        }
+    }
+
+    function search() {
+        const val = document.getElementById('inp').value.trim().toUpperCase();
+        const words = val.split(',').map(w => w.trim()).filter(w => w);
+        
+        // Cập nhật số lượng từ khóa tìm kiếm vào ô xám bên trái
+        document.getElementById('tagMon').innerText = words.length;
+
+        const filtered = dataStore.filter(r => {
+            if (words.length === 0) return true;
+            return words.some(w => Object.values(r).some(v => String(v).toUpperCase().includes(w)));
+        });
+
+        const html = filtered.map(r => `
+            <tr>
+                <td>${r.tt}</td>
+                <td>${formatNgay(r.ngay)}</td>
+                <td>${r.gio}</td>
+                <td class="mon-col">${r.mon}</td>
+                <td class="lop-col">${r.lop}</td>
+                <td>${r.gv}</td>
+                <td>${r.dd}</td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('out').innerHTML = html || '<tr><td colspan="7">Không tìm thấy dữ liệu</td></tr>';
+        
+        // Cập nhật tổng số dòng tìm thấy vào bên trong ô input (bên phải)
+        document.getElementById('totalCount').innerText = filtered.length;
+    }
+
+    function formatNgay(v) {
+        if (typeof v === 'number') {
+            const d = new Date((v - 25569) * 86400 * 1000);
+            return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+        }
+        return v;
+    }
+
+    function chup() {
+        const btn = document.querySelector('.btn-cap');
+        btn.innerText = "CHỜ...";
+        html2canvas(document.getElementById('area')).then(canvas => {
+            canvas.toBlob(blob => {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]).then(() => {
+                    btn.innerText = "OK!";
+                    setTimeout(() => btn.innerText = "📸 ẢNH", 1500);
+                });
+            });
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
