@@ -275,7 +275,7 @@
             </div>
             <div class="btn-group">
                 <button class="gdtc.html" style="margin-left: auto; background: #ea8c8c;" onclick="window.location.href='gdtc.html'">GDTC</button>
-                <button id="toggleBtn" class="btn" onclick="toggleViewMode()">Rút gọn</button>
+                <button id="toggleBtn" class="btn" onclick="toggleViewMode()">Gọn</button>
                 <button class="btn copy-button" onclick="doCapture()">📸 Ảnh</button>
             </div>
         </div>
@@ -451,7 +451,7 @@
         }
 
         function excelDate(s) { const d = new Date((s - 25569) * 86400 * 1000); return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`; }
-        function toggleViewMode() { isCompactView = !isCompactView; document.getElementById('toggleBtn').innerText = isCompactView ? "Đầy đủ" : "Rút gọn"; searchData(); }
+        function toggleViewMode() { isCompactView = !isCompactView; document.getElementById('toggleBtn').innerText = isCompactView ? "Đủ" : "Gọn"; searchData(); }
         function doCapture() {
             const wrapper = document.getElementById('tableWrapper'); const now = new Date();
             document.getElementById('exportTitleText').innerText = document.getElementById('dynamicTitle').innerText;
