@@ -45,7 +45,7 @@
             <input type="text" id="captcha-input" placeholder="Mã Captcha" autocomplete="off">
         </div>
         <input type="text" id="code-input" placeholder="Nhập 2 từ đầu tên sản phẩm" autocomplete="off">
-        <button class="btn btn-verify" id="btn-verify" onclick="confirmTask()" disabled>XÁC NHẬN (60S)</button>
+        <button class="btn btn-verify" id="btn-verify" onclick="confirmTask()" disabled>XÁC NHẬN (30S)</button>
     </div>
 
     <div id="ui-result" class="hidden">
@@ -60,7 +60,7 @@
 </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbwSAyaK9u7-BtvPWg3Ji8PCSVkYDJN-k-5N83j91EeqYUF79K9bsaPmsq6fY7vMh5FV1w/exec";
+    const API = "https://script.google.com/macros/s/AKfycbxdRRYvmxhfxgQ9yNAi5vFvznOWTdW82QePGnlrsxikZk1Nmkx-tyAkLdG7KCCDmSaAFg/exec";
     
     // Bảo mật: Chặn F12 & Chuột phải
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -100,7 +100,7 @@
 
     function openShopee() {
         window.open(taskData.link, '_blank');
-        let sec = 60;
+        let sec = 30;
         const btn = document.getElementById('btn-verify');
         const itv = setInterval(() => {
             sec--; btn.innerText = `XÁC NHẬN (${sec}s)`;
@@ -134,7 +134,7 @@
         const updateClock = () => {
             let d = Math.floor((exp - Date.now()) / 1000);
             if (d <= 0) { document.getElementById('clock').innerText = "00:00"; return; }
-            document.getElementById('clock').innerText = Math.floor(d/60).toString().padStart(2, '0') + ":" + (d%60).toString().padStart(2, '0');
+            document.getElementById('clock').innerText = Math.floor(d/30).toString().padStart(2, '0') + ":" + (d%30).toString().padStart(2, '0');
             requestAnimationFrame(updateClock);
         };
         updateClock();
