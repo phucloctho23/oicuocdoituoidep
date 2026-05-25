@@ -66,7 +66,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3Uh1-YjAhkdSZOKOQkKqaAueLv7zylLf05ODkV9seR3SLNaY3CF2essU6slif2bcIXA/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxTlaDkFJGI3VZEIdrLAiH481YEWP8Bp4joDNgoQxXyMaIR4KkH5slEgIvYmL0juZF8ig/exec";
 
         // BẢO MẬT: Chặn F12, Chuột phải, Ctrl+U
         document.addEventListener('contextmenu', e => e.preventDefault());
@@ -80,33 +80,41 @@
         window.onclick = function(e) { if (e.target == document.getElementById('registerModal')) closeRegister(); }
 
         // Xử lý Đăng nhập
-        document.getElementById('loginForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const btn = document.getElementById('btnLogin');
+// Xử lý Đăng nhập
+document.getElementById('loginForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
+    const btn = document.getElementById('btnLogin');
 
-            btn.innerText = "⏳ Đang kiểm tra...";
-            btn.disabled = true;
+    btn.innerText = "⏳ Đang kiểm tra...";
+    btn.disabled = true;
 
-            try {
-                const res = await fetch(`${SCRIPT_URL}?action=checkLogin&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`);
-                const status = await res.text();
+    try {
+        // THAY ĐỔI: Thêm cấu hình method và mode cors vào fetch
+        const res = await fetch(`${SCRIPT_URL}?action=checkLogin&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`, {
+            method: 'GET',
+            mode: 'cors'
+        });
+        
+        const status = await res.text();
 
-                if (status === "SUCCESS") {
-                    localStorage.setItem('isLoggedIn', 'true');
-                    window.location.href = "index.html";
-                } else {
-                    alert("❌ Sai tài khoản hoặc mật khẩu!");
-                    btn.innerText = "ĐĂNG NHẬP";
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                alert("⚠️ Lỗi kết nối Server!");
-                btn.innerText = "ĐĂNG NHẬP";
-                btn.disabled = false;
-            }
-        };
+        if (status.trim() === "SUCCESS") { // Dùng .trim() đề phòng khoảng trắng thừa
+            localStorage.setItem('isLoggedIn', 'true');
+            // Lưu ý: Đoạn này bạn đang chuyển hướng lại chính nó (index.html), hãy đổi thành trang chủ sau đăng nhập của bạn (ví dụ: home.html) nhé!
+            window.location.href = "index.html"; 
+        } else {
+            alert("❌ Sai tài khoản hoặc mật khẩu!");
+            btn.innerText = "ĐĂNG NHẬP";
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err); // In lỗi ra console để dễ theo dõi chi tiết
+        alert("⚠️ Lỗi kết nối Server!");
+        btn.innerText = "ĐĂNG NHẬP";
+        btn.disabled = false;
+    }
+};
     </script>
 </body>
 </html>
