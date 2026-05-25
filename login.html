@@ -66,55 +66,78 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdRRYvmxhfxgQ9yNAi5vFvznOWTdW82QePGnlrsxikZk1Nmkx-tyAkLdG7KCCDmSaAFg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby98erd1BYoAJO2eMNU3wwHSkyGOkO10SMyRrH4VxwAsRBHizGg7tN3csRdPoUoDon8SA/exec";
 
-        // BẢO MẬT: Chặn F12, Chuột phải, Ctrl+U
+        // Tạo / Lấy mã định danh thiết bị độc nhất 
+        let myDeviceId = localStorage.getItem('dtu_vfinal') || ('ID-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        localStorage.setItem('dtu_vfinal', myDeviceId);
+
+        // Bảo mật: chặn F12, chuột phải
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.onkeydown = function(e) {
             if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) || (e.ctrlKey && [85, 83].includes(e.keyCode))) return false;
         };
 
-        // Điều khiển Modal
         function openRegister() { document.getElementById('registerModal').style.display = 'block'; document.body.style.overflow = 'hidden'; }
         function closeRegister() { document.getElementById('registerModal').style.display = 'none'; document.body.style.overflow = 'auto'; }
         window.onclick = function(e) { if (e.target == document.getElementById('registerModal')) closeRegister(); }
 
-        // Xử lý Đăng nhập
-// Xử lý Đăng nhập
-document.getElementById('loginForm').onsubmit = async function(e) {
-    e.preventDefault();
-    const u = document.getElementById('username').value.trim();
-    const p = document.getElementById('password').value.trim();
-    const btn = document.getElementById('btnLogin');
-
-    btn.innerText = "⏳ Đang kiểm tra...";
-    btn.disabled = true;
-
-    try {
-        // THAY ĐỔI: Thêm cấu hình method và mode cors vào fetch
-        const res = await fetch(`${SCRIPT_URL}?action=checkLogin&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`, {
-            method: 'GET',
-            mode: 'cors'
+        // BỘ LẮNG NGHE TÍN HIỆU TỪ CAPTAIKHOAN.HTML GỬI RA
+        window.addEventListener("message", function(event) {
+            if (event.data && event.data.action === "autoLogin") {
+                document.getElementById('username').value = event.data.user;
+                document.getElementById('password').value = event.data.pass;
+                // Kích hoạt tiến trình submit đăng nhập tự động
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
         });
-        
-        const status = await res.text();
 
-        if (status.trim() === "SUCCESS") { // Dùng .trim() đề phòng khoảng trắng thừa
-            localStorage.setItem('isLoggedIn', 'true');
-            // Lưu ý: Đoạn này bạn đang chuyển hướng lại chính nó (index.html), hãy đổi thành trang chủ sau đăng nhập của bạn (ví dụ: home.html) nhé!
-            window.location.href = "index.html"; 
-        } else {
-            alert("❌ Sai tài khoản hoặc mật khẩu!");
-            btn.innerText = "ĐĂNG NHẬP";
-            btn.disabled = false;
-        }
-    } catch (err) {
-        console.error(err); // In lỗi ra console để dễ theo dõi chi tiết
-        alert("⚠️ Lỗi kết nối Server!");
-        btn.innerText = "ĐĂNG NHẬP";
-        btn.disabled = false;
-    }
-};
+        // Xử lý Đăng nhập & Chống đa thiết bị
+        document.getElementById('loginForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btnLogin');
+
+            btn.innerText = "⏳ Đang kiểm tra...";
+            btn.disabled = true;
+
+            try {
+                // Truyền tham số deviceId để kiểm tra trùng lặp thiết bị
+                const res = await fetch(`${SCRIPT_URL}?action=checkLogin&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}&deviceId=${myDeviceId}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                const status = await res.text();
+                const cleanStatus = status.trim();
+
+                if (cleanStatus === "SUCCESS") { 
+                    localStorage.setItem('isLoggedIn', 'true');
+                    closeRegister();
+                    // Thay index.html thành trang chủ sau đăng nhập của bạn (ví dụ: home.html)
+                    window.location.href = "index.html"; 
+                } else if (cleanStatus === "DEVICE_LOCKED") {
+                    alert("❌ Đăng nhập thất bại: Tài khoản này đang được sử dụng ở một thiết bị khác!");
+                    btn.innerText = "ĐĂNG NHẬP";
+                    btn.disabled = false;
+                    closeRegister();
+                } else if (cleanStatus === "EXPIRED") {
+                    alert("⚠️ Tài khoản đã hết hạn 15 phút sử dụng thử!");
+                    btn.innerText = "ĐĂNG NHẬP";
+                    btn.disabled = false;
+                } else {
+                    alert("❌ Sai tài khoản hoặc mật khẩu!");
+                    btn.innerText = "ĐĂNG NHẬP";
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("⚠️ Lỗi kết nối Server!");
+                btn.innerText = "ĐĂNG NHẬP";
+                btn.disabled = false;
+            }
+        };
     </script>
 </body>
 </html>
