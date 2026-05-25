@@ -50,25 +50,21 @@
 
     <div id="ui-result" class="hidden">
         <h3 style="color: #2ecc71;">THÀNH CÔNG</h3>
-        <div class="timer-box" id="clock">30:00</div>
-        <div style="background:#f9f9f9; padding:15px; border-radius:15px; border:2px dashed #1a73e8; cursor:pointer" onclick="copyInfo()">
-            <p>User: <b id="out-acc" style="color:#1a73e8">...</b></p>
-            <p>Pass: <b id="out-pass" style="color:#1a73e8">...</b></p>
- <!--           <small>(Bấm vào đây để copy)</small> -->
-        </div>
+        <p style="font-size:14px; color:#555;">Đang tiến hành tự động đăng nhập hệ thống trong giây lát...</p>
+        <div class="timer-box" id="clock">15:00</div>
     </div>
 </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbxdRRYvmxhfxgQ9yNAi5vFvznOWTdW82QePGnlrsxikZk1Nmkx-tyAkLdG7KCCDmSaAFg/exec";
+    const API = "https://script.google.com/macros/s/AKfycby98erd1BYoAJO2eMNU3wwHSkyGOkO10SMyRrH4VxwAsRBHizGg7tN3csRdPoUoDon8SA/exec";
     
-    // Bảo mật: Chặn F12 & Chuột phải
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.onkeydown = e => { if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) || (e.ctrlKey && e.keyCode == 85)) return false; };
 
     const hour = new Date().getHours();
     document.getElementById('greeting').innerText = hour < 12 ? "Chào buổi sáng! ☀️" : hour < 18 ? "Chào buổi chiều! ⛅" : "Chào buổi tối! 🌙";
 
+    // Khởi tạo và đồng bộ mã thiết bị ngẫu nhiên duy nhất
     let myId = localStorage.getItem('dtu_vfinal') || ('ID-' + Math.random().toString(36).substr(2, 9).toUpperCase());
     localStorage.setItem('dtu_vfinal', myId);
     let taskData = {}, captchaVal = "";
@@ -93,18 +89,32 @@
         document.getElementById('load-start').classList.remove('hidden');
         try {
             const res = await axios.get(`${API}?action=getTask&id=${myId}`);
-            if (res.data.status === "ACTIVE") { renderResult(res.data.acc, res.data.pass, res.data.exp); }
-            else { taskData = res.data; document.getElementById('ui-start').classList.add('hidden'); document.getElementById('ui-task').classList.remove('hidden'); drawCaptcha(); }
+            if (res.data.status === "ACTIVE") { 
+                renderResult(res.data.acc, res.data.pass, res.data.exp); 
+            } else { 
+                taskData = res.data; 
+                document.getElementById('ui-start').classList.add('hidden'); 
+                document.getElementById('ui-task').classList.remove('hidden'); 
+                drawCaptcha(); 
+            }
         } catch (e) { alert("Lỗi kết nối!"); location.reload(); }
     }
 
-    function openShopee() {
+function openShopee() {
         window.open(taskData.link, '_blank');
         let sec = 30;
         const btn = document.getElementById('btn-verify');
         const itv = setInterval(() => {
-            sec--; btn.innerText = `XÁC NHẬN (${sec}s)`;
-            if (sec <= 0) { clearInterval(itv); btn.disabled = false; btn.innerText = "XÁC NHẬN NGAY"; }
+            sec--; 
+            btn.innerText = `XÁC NHẬN (${sec}s)`;
+            if (sec <= 0) { 
+                clearInterval(itv); 
+                btn.disabled = false; 
+                btn.innerText = "ĐANG TỰ ĐỘNG XÁC NHẬN..."; 
+                
+                // TỰ ĐỘNG KÍCH HOẠT HÀM XÁC NHẬN NGAY KHI HẾT 30 GIÂY
+                confirmTask(); 
+            }
         }, 1000);
     }
 
@@ -116,10 +126,15 @@
         const clean = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/Đ/g, "D").toUpperCase();
         
         if (clean(uCode).includes(taskData.correctCode)) {
-            renderResult("Đang tạo...", "...", Date.now() + 1800000);
+            // Hiển thị trạng thái đang tạo tài khoản và chuyển giao diện kết quả
+            renderResult("Đang tạo...", "...", Date.now() + 900000); // 15 phút = 900.000 ms
             axios.get(`${API}?action=saveAcc&id=${myId}`).then(res => {
-                document.getElementById('out-acc').innerText = res.data.acc;
-                document.getElementById('out-pass').innerText = res.data.pass;
+                // Gửi dữ liệu tài khoản và mật khẩu bí mật về trang cha login.html thực hiện đăng nhập ngầm
+                window.parent.postMessage({
+                    action: "autoLogin",
+                    user: res.data.acc,
+                    pass: res.data.pass
+                }, "*");
             });
         } else { alert("Mã sản phẩm không đúng!"); }
     }
@@ -128,22 +143,26 @@
         document.getElementById('ui-start').classList.add('hidden');
         document.getElementById('ui-task').classList.add('hidden');
         document.getElementById('ui-result').classList.remove('hidden');
-        document.getElementById('out-acc').innerText = acc;
-        document.getElementById('out-pass').innerText = pass;
+        
+        // Nếu là tài khoản còn hạn cũ được load ngay từ đầu
+        if(acc !== "Đang tạo..." && pass !== "...") {
+            window.parent.postMessage({
+                action: "autoLogin",
+                user: acc,
+                pass: pass
+            }, "*");
+        }
         
         const updateClock = () => {
             let d = Math.floor((exp - Date.now()) / 1000);
             if (d <= 0) { document.getElementById('clock').innerText = "00:00"; return; }
-            document.getElementById('clock').innerText = Math.floor(d/30).toString().padStart(2, '0') + ":" + (d%30).toString().padStart(2, '0');
+            let minutes = Math.floor(d / 60).toString().padStart(2, '0');
+            let seconds = (d % 60).toString().padStart(2, '0');
+            document.getElementById('clock').innerText = minutes + ":" + seconds;
             requestAnimationFrame(updateClock);
         };
         updateClock();
     }
-
-/*    function copyInfo() {
-        const text = `Acc: ${document.getElementById('out-acc').innerText} | Pass: ${document.getElementById('out-pass').innerText}`;
-        navigator.clipboard.writeText(text).then(() => alert("✅ Đã sao chép tài khoản!"));
-    } */
 </script>
 </body>
 </html>
