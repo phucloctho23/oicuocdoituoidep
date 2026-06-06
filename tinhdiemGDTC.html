@@ -74,41 +74,41 @@
         <div class="row">
             <label>Học phần 1</label>
             <div class="input-group">
-                <input type="text" id="hp1_10" placeholder="Thang 10" oninput="smartInput(this, 1, 10)">
-                <input type="text" id="hp1_4" placeholder="Thang 4" oninput="smartInput(this, 1, 4)">
+                <input type="text" id="hp1_10" placeholder="Thang điểm 10" oninput="smartInput(this, 1, 10)">
+                <input type="text" id="hp1_4" placeholder="Thang điểm 4" oninput="smartInput(this, 1, 4)">
             </div>
         </div>
 
         <div class="row">
             <label>Học phần 2</label>
             <div class="input-group">
-                <input type="text" id="hp2_10" placeholder="Thang 10" oninput="smartInput(this, 2, 10)">
-                <input type="text" id="hp2_4" placeholder="Thang 4" oninput="smartInput(this, 2, 4)">
+                <input type="text" id="hp2_10" placeholder="Thang điểm 10" oninput="smartInput(this, 2, 10)">
+                <input type="text" id="hp2_4" placeholder="Thang điểm 4" oninput="smartInput(this, 2, 4)">
             </div>
         </div>
 
         <div class="row">
             <label>Học phần 3</label>
             <div class="input-group">
-                <input type="text" id="hp3_10" placeholder="Thang 10" oninput="smartInput(this, 3, 10)">
-                <input type="text" id="hp3_4" placeholder="Thang 4" oninput="smartInput(this, 3, 4)">
+                <input type="text" id="hp3_10" placeholder="Thang điểm 10" oninput="smartInput(this, 3, 10)">
+                <input type="text" id="hp3_4" placeholder="Thang điểm 4" oninput="smartInput(this, 3, 4)">
             </div>
         </div>
 
-        <button type="button" class="btn-predict" id="btnPredict" onclick="autoFillRemaining()">TỰ DỰ TÍNH ĐIỂM CÒN LẠI</button>
+        <button type="button" class="btn-predict" id="btnPredict" onclick="autoFillRemaining()">TÍNH ĐIỂM CÒN LẠI</button>
         
         <div class="footer">
             <div class="footer-actions">
                 <div>
-                    <button type="button" class="action-btn" onclick="copyData()">Sao chép kết quả</button>
+                    <button type="button" class="action-btn" onclick="copyData()">Sao chép</button>
                     <span style="color: #cbd5e1; margin: 0 5px;">|</span>
-                    <button type="button" class="action-btn" onclick="clearAll()">Xóa sạch</button>
+                    <button type="button" class="action-btn" onclick="clearAll()">Xóa</button>
                 </div>
-                <span style="color: #cbd5e1; font-size: 0.7rem;">Duy Tân University</span>
+                <span style="color: #cbd5e1; font-size: 0.7rem;">Nhật Tân</span>
             </div>
             <div class="tg-links">
                 <a href="https://t.me/Dai_Hoc_Duy_Tan" target="_blank" class="tg-link">✈ Official Channel</a>
-                <a href="https://t.me/chatsinhvienDTU" target="_blank" class="tg-link">✈ Nhóm trao đổi</a>
+                <a href="https://t.me/Chat_Dai_Hoc_Duy_Tan" target="_blank" class="tg-link">✈ Nhóm trao đổi</a>
             </div>
         </div>
     </form>
@@ -220,8 +220,9 @@ function copyData() {
     }
     text += `------------------------------\n`;
     text += `TRUNG BÌNH TỔNG: ${avg}\nKẾT QUẢ: ${status}`;
-    text += `\n\n🔗 Cộng đồng Official: https://t.me/Dai_Hoc_Duy_Tan`;
-    text += `\n🔗 Nhóm trao đổi: https://t.me/chatsinhvienDTU`;
+    text += `\n\n🔗 Website: https://t.me/daihocduytan_bot/tienichdtu`;
+    text += `\n🔗 Cộng đồng Official: https://t.me/Dai_Hoc_Duy_Tan`;
+    text += `\n🔗 Nhóm trao đổi: https://t.me/Chat_Dai_Hoc_Duy_Tan`;
 
     // Cách copy chắc chắn nhất cho cả Mobile
     const textArea = document.createElement("textarea");
