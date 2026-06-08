@@ -307,7 +307,7 @@
                     <!-- <li><a href="https://chongcau.github.io/embe/" target="_blank"><i class="fa-solid fa-globe"></i> Admin</a></li> -->
                     <li><a href="https://t.me/s/Dai_Hoc_Duy_Tan" target="_blank"><i class="fab fa-telegram-plane"></i>
                             DTU Official Community</a></li>
-                    <li><a href="https://t.me/chatsinhvienDTU" target="_blank"><i class="fab fa-telegram-plane"></i>
+                    <li><a href="https://t.me/Chat_Dai_Hoc_Duy_Tan" target="_blank"><i class="fab fa-telegram-plane"></i>
                             Chat DTU</a></li>
                     <!--    <li><a href="https://www.facebook.com/groups/hoctaptraodoidtu" target="_blank"><i
                                 class="fa-brands fa-facebook"></i> DTU - Đại Học Duy Tân</a></li> -->
@@ -449,9 +449,9 @@
 // Sửa lại đoạn (function() {...}) ở đầu thẻ script trong index.html
 (function() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-        window.location.replace("login.html");
-    }
+    // if (isLoggedIn !== 'true') {
+    //     window.location.replace("login.html");
+    // }
 })();
 
 // Trong hàm updateActivity và checkInactivity
@@ -592,7 +592,7 @@ function updateActivity() {
         });
 function logout() {
     sessionStorage.clear();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 }
         // 1. Chặn chuột phải
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -638,12 +638,12 @@ function checkInactivity() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const currentTime = new Date().getTime();
 
-    if (isLoggedIn === 'true' && lastActivity) {
-        if (currentTime - parseInt(lastActivity) > INACTIVITY_LIMIT) {
-            alert("Phiên làm việc đã hết hạn.");
-            logout(); 
-        }
-    }
+    // if (isLoggedIn === 'true' && lastActivity) {
+    //     if (currentTime - parseInt(lastActivity) > INACTIVITY_LIMIT) {
+    //         alert("Phiên làm việc đã hết hạn.");
+    //         logout(); 
+    //     }
+    // }
 }
 
 // 4. Theo dõi hành động người dùng
