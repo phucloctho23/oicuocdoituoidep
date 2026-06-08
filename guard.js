@@ -7,19 +7,19 @@
 
     // 1. CHẶN HIỂN THỊ NGAY LẬP TỨC
     // Nếu chưa đăng nhập, xóa sạch HTML để dù có lỗi file login.html vẫn không lộ dữ liệu
-    if (isLoggedIn !== 'true') {
-        document.documentElement.innerHTML = "Access Denied. Redirecting..."; 
-        if (!window.location.href.includes("login.html")) {
-            window.location.href = "login.html";
-        }
-        return;
-    }
+    // if (isLoggedIn !== 'true') {
+    //     document.documentElement.innerHTML = "Access Denied. Redirecting..."; 
+    //     if (!window.location.href.includes("login.html")) {
+    //         window.location.href = "login.html";
+    //     }
+    //     return;
+    // }
 
     // 2. Kiểm tra hạn dùng tài khoản
-    if (expiryDate && new Date(expiryDate) < new Date()) {
-        redirectToTelegram();
-        return;
-    }
+    // if (expiryDate && new Date(expiryDate) < new Date()) {
+    //     redirectToTelegram();
+    //     return;
+    // }
 
     // 3. Hiển thị lại nội dung sau khi đã xác thực xong
     document.addEventListener("DOMContentLoaded", function() {
