@@ -534,20 +534,24 @@
       const formData = new FormData(form);
       const data = {};
 
-      // Lấy thời gian
-      data["⏰ Thời gian"] = new Date().toLocaleString("vi-VN", {
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      data["⏰ Dấu thời gian"] = new Date().toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
       });
 
       // Thu thập dữ liệu
-      data["👤 Họ tên"] = formData.get("fullName") || "Bạn";
-      data["Cảm thấy"] = formData.get("feelings") || "Không có";
-      data["Kinh nguyệt"] = formData.get("menstrualFlow") || "Không có";
-      data["Cân nặng"] = formData.get("weight") || "Không có";
-      data["Thuốc tránh thai"] = formData.get("ocp") || "Không có";
-      data["Thuốc ngoài"] = formData.get("medication");
-      data["Giấc ngủ"] = formData.get("sleepQuality") || "Không có";
+      data["👤 Họ và tên"] = formData.get("fullName") || "Vô danh";
+      data["Hôm nay cảm thấy thế nào"] = formData.get("feelings") || "Không có";
+      data["Lượng kinh nguyệt"] = formData.get("menstrualFlow") || "Không có";
+      data["Cân nặng (kg)"] = formData.get("weight") ? formData.get("weight") + " kg" : "Không có";
+      data["Thuốc tránh thai đường uống (OC)"] = formData.get("ocp") || "Không có";
+      data["Thuốc ngoài"] = formData.get("medication") || "Không có";
+      data["Chất lượng giấc ngủ"] = formData.get("sleepQuality") || "Không có";
       data["Ghi chú"] = formData.get("notes") || "Không có";
 
       // Hàm lấy danh sách checkbox
@@ -558,20 +562,19 @@
 
       data["Tâm trạng"] = checkedValues("moods");
       data["Triệu chứng"] = checkedValues("symptoms");
-      data["Tiêu hóa"] = checkedValues("digestion");
+      data["Tiêu hóa và chất thải"] = checkedValues("digestion");
       data["Khác"] = checkedValues("other");
-      data["Vận động"] = checkedValues("exercise");
-      data["Tình dục"] = checkedValues("sexualActivity");
-      data["Dịch âm đạo"] = checkedValues("vaginalDischarge");
-      data["Rụng trứng"] = checkedValues("ovulationSigns");
+      data["Hoạt động thể chất"] = checkedValues("exercise");
+      data["Hoạt động tình dục và nhu cầu tình dục"] = checkedValues("sexualActivity");
+      data["Tiết dịch âm đạo"] = checkedValues("vaginalDischarge");
+      data["Dấu hiệu rụng trứng"] = checkedValues("ovulationSigns");
 
       try {
-        // Tạo lời khuyên chi tiết
-        const advice = generateUltimateAdvice(data);
+        const advice = generateAdvice(data);
         const telegramMessage = formatDataForTelegram(data, advice);
 
         // Lưu dữ liệu
-        localStorage.setItem("healthDataName", data["👤 Họ tên"]);
+        localStorage.setItem("healthDataName", data["👤 Họ và tên"]);
         localStorage.setItem("healthAdvice", advice);
         localStorage.setItem("pendingTelegramMessage", telegramMessage);
 
@@ -589,165 +592,167 @@
     });
 
     function formatDataForTelegram(data, advice) {
-      let message = `*🌺 NHẬT KÝ SỨC KHỎE 🌺*\n\n`;
+      let message = `📝 Cập nhật Sức khỏe mới nhất:\n\n`;
       for (const key in data) {
         if (data.hasOwnProperty(key)) {
           let value = data[key];
           if (Array.isArray(value)) value = value.join(", ");
-          message += `*${key}:* ${value}\n`;
+          
+          if (value !== "Không có") {
+            message += `- ${key}: ${value}\n`;
+          }
         }
       }
-      message += `\n*🌟 GIẢI PHÁP CHI TIẾT:*\n${advice}`;
+      message += `\n💡 Lời khuyên và giải pháp:\n`;
+      if (advice) {
+        const adviceLines = advice.split('\n');
+        for (const line of adviceLines) {
+          if (line.trim() !== '') message += `- ${line}\n`;
+        }
+      }
       return message;
     }
 
-    // --- HÀM TẠO LỜI KHUYÊN FULL 100% ---
-    function generateUltimateAdvice(rowData) {
-      let adviceList = [];
-
-      // Hàm thêm lời khuyên
-      const addTip = (condition, icon, title, action) => {
-        if (condition) {
-          adviceList.push(`${icon} ${title}: ${action}`);
-        }
+    function generateAdvice(rowData) {
+      let adviceList = new Set();
+      const addAdvice = (condition, advice) => {
+        if (condition) adviceList.add(advice);
       };
+      
+      const symptoms = rowData["Triệu chứng"];
+      const moods = rowData["Tâm trạng"];
+      const digestion = rowData["Tiêu hóa và chất thải"];
+      const exercise = rowData["Hoạt động thể chất"];
+      const sexual = rowData["Hoạt động tình dục và nhu cầu tình dục"];
+      const vaginalDischargeData = rowData["Tiết dịch âm đạo"];
+      const ovulationSigns = rowData["Dấu hiệu rụng trứng"];
 
-      // Lấy dữ liệu
-      const s = rowData["Triệu chứng"]; // symptoms
-      const m = rowData["Tâm trạng"]; // moods
-      const d = rowData["Tiêu hóa"]; // digestion
-      const e = rowData["Vận động"]; // exercise
-      const sex = rowData["Tình dục"]; // sexualActivity
-      const v = rowData["Dịch âm đạo"]; // vaginalDischarge
-      const o = rowData["Rụng trứng"]; // ovulationSigns
-      const f = rowData['Cảm thấy']; // feelings
-      const oth = rowData["Khác"]; // other
-      const flow = rowData['Kinh nguyệt'];
+      // 🎯 Cảm giác chung
+      addAdvice(rowData['Hôm nay cảm thấy thế nào'] === "Tốt", "Bạn đang có một ngày tốt lành, hãy tận hưởng nó!");
+      addAdvice(rowData['Hôm nay cảm thấy thế nào'] === "Bình thường", "Cơ thể bạn đang ổn định, hãy duy trì lối sống lành mạnh.");
+      addAdvice(rowData['Hôm nay cảm thấy thế nào'] === "Không tốt", "Bạn đang cảm thấy không khỏe, hãy nghỉ ngơi và theo dõi thêm.");
 
-      // 1. TỔNG QUAN (Feelings)
-      addTip(f === "Tốt", "🌟", "Tổng quan", "Tuyệt vời! Hãy tận dụng ngày đẹp trời này.");
-      addTip(f === "Bình thường", "🍃", "Tổng quan", "Mọi thứ ổn định. Hãy duy trì thói quen tốt.");
-      addTip(f === "Không tốt", "🌧️", "Tổng quan", "Đừng cố quá. Hãy nuông chiều bản thân hôm nay.");
+      // 🎯 Triệu chứng
+      symptoms.forEach(s => {
+          if (s === "Mọi thứ đều ổn") addAdvice(true, "Tuyệt vời! Hãy tiếp tục duy trì lối sống lành mạnh.");
+          if (s === "Chuột rút") addAdvice(true, "Hãy thử chườm ấm hoặc massage nhẹ để giảm đau bụng.");
+          if (s === "Sưng đau ngực") addAdvice(true, "Có thể do thay đổi nội tiết, nếu kéo dài hãy tham khảo bác sĩ.");
+          if (s === "Đau đầu") addAdvice(true, "Uống đủ nước và nghỉơi, hạn chế tiếp xúc ánh sáng mạnh.");
+          if (s === "Mụn") addAdvice(true, "Chú ý vệ sinh da mặt và hạn chế đồ ăn dầu mỡ.");
+          if (s === "Đau lưng") addAdvice(true, "Kéo giãn cơ và giữ tư thế đúng khi ngồi.");
+          if (s === "Mệt mỏi") addAdvice(true, "Nghỉ ngơi hợp lý và bổ sung thực phẩm giàu năng lượng.");
+          if (s === "Thèm ăn") addAdvice(true, "Hãy ưu tiên thực phẩm lành mạnh như trái cây, hạt, rau xanh thay vì đồ ngọt và dầu mỡ.");
+          if (s === "Mất ngủ") addAdvice(true, "Thư giãn trước khi ngủ, tránh dùng điện thoại quá nhiều.");
+          if (s === "Đau bụng") addAdvice(true, "Hãy thử chườm ấm, nghỉ ngơi và uống đủ nước. Nếu đau kéo dài hãy tham khảo ý kiến bác sĩ.");
+          if (s === "Ngứa âm đạo" || s === "Khô âm đạo") addAdvice(true, "Có thể là dấu hiệu nhiễm khuẩn hoặc thay đổi nội tiết, nếu kéo dài hãy đi khám phụ khoa.");
+      });
 
-      // 2. TÂM TRẠNG (Moods - Full list)
-      if (m.includes("Bình tĩnh")) addTip(true, "😌", "Bình tĩnh", "Trạng thái tuyệt vời để ra các quyết định quan trọng.");
-      if (m.includes("Vui vẻ")) addTip(true, "😄", "Vui vẻ", "Nụ cười là thuốc bổ, hãy lan tỏa nó nhé!");
-      if (m.includes("Mạnh mẽ")) addTip(true, "💪", "Mạnh mẽ", "Bạn đang rất 'cháy'! Giải quyết ngay những việc khó nhất nào.");
-      if (m.includes("Phấn chấn")) addTip(true, "✨", "Phấn chấn", "Năng lượng cao! Thích hợp để sáng tạo hoặc tập luyện.");
-      if (m.includes("Thất thường")) addTip(true, "🌤️", "Thất thường", "Đừng lo, hormone thay đổi thôi. Chấp nhận cảm xúc lúc này.");
-      if (m.includes("Bực bội")) addTip(true, "😠", "Bực bội", "Đi bộ nhanh hoặc đấm vào gối để xả năng lượng tiêu cực.");
-      if (m.includes("Buồn")) addTip(true, "😢", "Buồn", "Khóc cũng là cách thải độc cho tâm hồn. Bạn sẽ ổn thôi.");
-      if (m.includes("Lo lắng")) addTip(true, "😥", "Lo lắng", "Hít sâu 4s - Giữ 7s - Thở ra 8s. Làm 3 lần ngay đi.");
-      if (m.includes("Trầm cảm")) addTip(true, "🤝", "Trầm cảm", "Hãy nhắn tin cho một người bạn thân. Đừng ở một mình quá lâu.");
-      if (m.includes("Cảm thấy có lỗi")) addTip(true, "😔", "Tự trách", "Tha thứ cho bản thân đi. Ai cũng mắc sai lầm mà.");
-      if (m.includes("Suy nghĩ ám ảnh")) addTip(true, "🧠", "Suy nghĩ nhiều", "Viết hết ra giấy (Brain dump) để giải phóng đầu óc.");
-      if (m.includes("Thiếu năng lượng")) addTip(true, "🔋", "Hết pin", "Nghỉ ngơi ngay. Đừng uống thêm cafe, hãy uống nước lọc.");
-      if (m.includes("Lãnh đạm")) addTip(true, "😶", "Lãnh đạm", "Thử nghe một bản nhạc sôi động để kích thích giác quan.");
-      if (m.includes("Bối rối")) addTip(true, "😕", "Bối rối", "Đừng quyết định gì lúc này. Ngủ một giấc đã.");
-      if (m.includes("Rất hay tự trách mình")) addTip(true, "😫", "Áp lực", "Hãy nói với mình: 'Tôi đã làm tốt nhất có thể rồi'.");
+      // 🎯 Tâm trạng
+      moods.forEach(m => {
+          if (["Buồn", "Trầm cảm", "Lo lắng"].includes(m)) addAdvice(true, "Nếu cảm giác này kéo dài, hãy tìm sự hỗ trợ từ chuyên gia tâm lý.");
+          if (m === "Thiếu năng lượng") addAdvice(true, "Hãy chú ý ngủ đủ giấc và ăn uống đầy đủ dinh dưỡng.");
+          if (m === "Bực bội" || m === "Căng thẳng") addAdvice(true, "Hãy thử thiền hoặc tập thở để giảm stress.");
+          if (m === "Cảm thấy có lỗi") addAdvice(true, "Hãy học cách tha thứ cho bản thân, ai cũng có lúc mắc sai lầm.");
+          if (m === "Rất hay tự trách mình") addAdvice(true, "Thay vì trách bản thân, hãy tập trung vào cách cải thiện tình huống.");
+          if (m === "Suy nghĩ ám ảnh") addAdvice(true, "Hãy thử viết nhật ký hoặc chia sẻ với người tin tưởng.");
+          if (m === "Bối rối") addAdvice(true, "Hãy dành thời gian tạm dừng, sắp xếp lại suy nghĩ và ưu tiên việc quan trọng.");
+          if (m === "Lãnh đạm") addAdvice(true, "Thử làm một hoạt động mới mẻ để tìm lại hứng thú.");
+          if (["Bình tĩnh", "Vui vẻ", "Mạnh mẽ", "Phấn chấn"].includes(m)) addAdvice(true, "Hãy tiếp tục duy trì năng lượng tích cực này!");
+      });
 
-      // 3. TRIỆU CHỨNG (Symptoms - Full list)
-      if (s.includes("Mọi thứ đều ổn")) addTip(true, "✅", "Sức khỏe", "Cơ thể ngoan. Hãy tự thưởng cho mình món gì đó ngon!");
-      if (s.includes("Chuột rút")) addTip(true, "🔥", "Chuột rút", "Chườm ấm ngay. Bổ sung Magie (chuối, bơ, hạt).");
-      if (s.includes("Sưng đau ngực")) addTip(true, "👙", "Đau ngực", "Thả rông khi ở nhà, massage nhẹ nhàng dưới vòi hoa sen ấm.");
-      if (s.includes("Đau đầu")) addTip(true, "💆‍♀️", "Đau đầu", "Uống 1 cốc nước lớn. Rời xa màn hình điện thoại 20 phút.");
-      if (s.includes("Mụn")) addTip(true, "🧼", "Mụn", "Đừng sờ tay lên mặt! Rửa mặt sạch và ngủ sớm.");
-      if (s.includes("Đau lưng")) addTip(true, "🧘‍♀️", "Đau lưng", "Nằm ngửa, kê gối dưới đầu gối. Tránh ngồi sai tư thế.");
-      if (s.includes("Mệt mỏi")) addTip(true, "💤", "Mệt mỏi", "Chợp mắt 15-20 phút (Power nap) để sạc lại pin.");
-      if (s.includes("Thèm ăn")) addTip(true, "🍎", "Thèm ăn", "Cơ thể cần năng lượng. Chọn trái cây thay vì bánh ngọt.");
-      if (s.includes("Mất ngủ")) addTip(true, "🌙", "Mất ngủ", "Ngâm chân nước ấm 10 phút trước khi lên giường.");
-      if (s.includes("Đau bụng")) addTip(true, "🍵", "Đau bụng", "Uống trà gừng ấm. Nằm co người (tư thế bào thai).");
-      if (s.includes("Ngứa âm đạo")) addTip(true, "⚠️", "Ngứa vùng kín", "Rửa sạch bằng nước ấm, lau khô. Tuyệt đối không gãi.");
-      if (s.includes("Khô âm đạo")) addTip(true, "💧", "Khô hạn", "Uống thêm nước. Cân nhắc dùng gel bôi trơn dưỡng ẩm.");
+      // 🎯 Tiêu hóa và chất thải
+      digestion.forEach(d => {
+          if (d === "Bình thường") addAdvice(true, "Hệ tiêu hóa hoạt động tốt, hãy tiếp tục duy trì chế độ ăn uống lành mạnh.");
+          if (d === "Buồn nôn") addAdvice(true, "Hãy nghỉ ngơi, uống nước ấm từng ngụm nhỏ và tránh thức ăn nhiều dầu mỡ.");
+          if (d === "Đầy hơi") addAdvice(true, "Hạn chế đồ uống có ga và ăn chậm nhai kỹ.");
+          if (d === "Táo bón") addAdvice(true, "Uống nhiều nước và bổ sung chất xơ.");
+          if (d === "Tiêu chảy") addAdvice(true, "Bổ sung nước, oresol để tránh mất nước.");
+      });
 
-      // 4. TIÊU HÓA (Digestion - Full list)
-      if (d.includes("Bình thường")) addTip(true, "👍", "Tiêu hóa", "Hệ tiêu hóa tốt là chìa khóa của làn da đẹp.");
-      if (d.includes("Buồn nôn")) addTip(true, "🍋", "Buồn nôn", "Ngửi vỏ chanh, uống trà gừng. Ăn đồ khô (bánh quy, bánh mì).");
-      if (d.includes("Đầy hơi")) addTip(true, "🎈", "Đầy hơi", "Tránh đồ uống có ga. Thử động tác Yoga 'Ôm gối' để đẩy hơi.");
-      if (d.includes("Táo bón")) addTip(true, "🥝", "Táo bón", "Ăn ngay đu đủ/thanh long. Uống nhiều nước vào buổi sáng.");
-      if (d.includes("Tiêu chảy")) addTip(true, "🍞", "Tiêu chảy", "Ăn cháo trắng, chuối. Uống Oresol để bù điện giải.");
+      // 🎯 Kinh nguyệt
+      if (rowData['Lượng kinh nguyệt'] === "Bình thường") addAdvice(true, "Kinh nguyệt ổn định, hãy duy trì chế độ ăn uống và nghỉ ngơi hợp lý.");
+      if (rowData['Lượng kinh nguyệt'] === "Nhiều") addAdvice(true, "Nếu ra máu nhiều, hãy bổ sung sắt và theo dõi tình trạng.");
+      if (rowData['Lượng kinh nguyệt'] === "Ít") addAdvice(true, "Theo dõi chu kỳ tiếp theo, nếu bất thường hãy đi khám.");
+      if (rowData['Lượng kinh nguyệt'] === "Cục máu đông") addAdvice(true, "Nếu có cục máu đông lớn, nên tham khảo bác sĩ.");
 
-      // 5. KINH NGUYỆT (Menstrual Flow)
-      if (flow === "Bình thường") addTip(true, "🩸", "Kinh nguyệt", "Chu kỳ ổn định. Nhớ thay băng vệ sinh mỗi 4 tiếng.");
-      if (flow === "Ít") addTip(true, "📉", "Kinh ít", "Có thể do stress hoặc ăn kiêng. Theo dõi thêm chu kỳ sau.");
-      if (flow === "Nhiều") addTip(true, "🍷", "Kinh nhiều", "Ăn thêm thịt bò, rau bina để bổ máu. Tránh vận động mạnh.");
-      if (flow === "Cục máu đông") addTip(true, "⚠️", "Máu đông", "Uống nước ấm để máu lưu thông. Nếu đau dữ dội hãy đi khám.");
+      // 🎯 Hoạt động thể chất
+      if (exercise.includes("Không tập")) addAdvice(true, "Hãy vận động nhẹ như đi bộ để cơ thể khỏe mạnh.");
+      if (exercise.includes("Yoga")) addAdvice(true, "Yoga rất tốt để giảm căng thẳng và tăng dẻo dai.");
+      if (exercise.includes("Gym")) addAdvice(true, "Hãy kết hợp tập luyện với dinh dưỡng hợp lý.");
+      if (exercise.includes("Aerobic & nhảy múa")) addAdvice(true, "Hoạt động này giúp đốt cháy năng lượng và cải thiện tâm trạng.");
+      if (exercise.includes("Bơi lội")) addAdvice(true, "Bơi lội giúp tăng cường toàn bộ cơ thể và rất tốt cho tim mạch.");
+      if (exercise.includes("Thể thao đồng đội")) addAdvice(true, "Thể thao đồng đội không chỉ tốt cho sức khỏe mà còn giúp gắn kết xã hội.");
+      if (exercise.includes("Chạy")) addAdvice(true, "Chạy bộ giúp tăng sức bền và giải phóng endorphin, cải thiện tâm trạng.");
+      if (exercise.includes("Đạp xe đạp")) addAdvice(true, "Đạp xe là lựa chọn tuyệt vời cho hệ tim mạch và sức khỏe tổng thể.");
+      if (exercise.includes("Đi bộ")) addAdvice(true, "Đi bộ mỗi ngày giúp cải thiện tuần hoàn máu.");
 
-      // 6. KHÁC (Other - Full list)
-      if (oth.includes("Đi lại")) addTip(true, "🚶", "Đi lại", "Vận động nhẹ nhàng giúp khí huyết lưu thông, giảm mệt mỏi.");
-      if (oth.includes("Căng thẳng")) addTip(true, "🤯", "Căng thẳng", "Ngưng việc đang làm lại. Hít thở sâu 5 lần.");
-      if (oth.includes("Thiền")) addTip(true, "🧘", "Thiền", "Tuyệt vời! Thiền giúp cân bằng hormone và cảm xúc.");
-      if (oth.includes("Bài tập Kegel")) addTip(true, "🍑", "Kegel", "Rất tốt cho cơ sàn chậu. Tiếp tục duy trì nhé!");
-      if (oth.includes("Bài tập thở")) addTip(true, "🌬️", "Tập thở", "Oxy là liều thuốc tự nhiên tốt nhất cho làn da và não bộ.");
-      if (oth.includes("Bị bệnh hay bị thương")) addTip(true, "🚑", "Sức khỏe yếu", "Ưu tiên số 1 lúc này là nghỉ ngơi và tuân thủ y lệnh.");
-      if (oth.includes("Rượu")) addTip(true, "🍷", "Có cồn", "Nhớ uống 1 ly nước lọc sau mỗi ly rượu để tránh mất nước/đau đầu.");
+      // 🎯 Hoạt động tình dục và nhu cầu tình dục
+      if (sexual.includes("Không quan hệ tình dục")) addAdvice(true, "Không quan hệ tình dục cũng là một lựa chọn lành mạnh, quan trọng là bạn cảm thấy thoải mái với quyết định của mình.");
+      if (sexual.includes("Thủ dâm")) addAdvice(true, "Thủ dâm ở mức độ vừa phải lành mạnh và giúp giảm căng thẳng.");
+      if (sexual.includes("Quan hệ tình dục có bảo vệ")) addAdvice(true, "Sử dụng biện pháp bảo vệ giúp ngăn ngừa mang thai ngoài ý muốn và bệnh lây qua đường tình dục.");
+      if (sexual.includes("Quan hệ tình dục không bảo vệ")) addAdvice(true, "Hãy lưu ý nguy cơ mang thai ngoài ý muốn và bệnh lây qua đường tình dục.");
+      if (sexual.includes("Quan hệ tình dục bằng miệng")) addAdvice(true, "Quan hệ bằng miệng vẫn có nguy cơ lây bệnh, hãy cân nhắc biện pháp an toàn.");
+      if (sexual.includes("Quan hệ tình dục qua đường hậu môn")) addAdvice(true, "Quan hệ qua đường hậu môn có nguy cơ tổn thương và lây bệnh cao, hãy sử dụng biện pháp bảo vệ.");
+      if (sexual.includes("Cực khoái")) addAdvice(true, "Cực khoái mang lại nhiều lợi ích cho tinh thần và thể chất, hãy tận hưởng một cách lành mạnh.");
+      if (sexual.includes("Nhu cầu tình dục cao")) addAdvice(true, "Đây có thể là dấu hiệu rụng trứng, hoàn toàn bình thường.");
+      if (sexual.includes("Nhu cầu tình dục bình thường")) addAdvice(true, "Nhu cầu tình dục ổn định, đây là dấu hiệu tốt cho sức khỏe sinh lý.");
+      if (sexual.includes("Nhu cầu tình dục thấp")) addAdvice(true, "Có thể do mệt mỏi hoặc stress, hãy nghỉ ngơi thêm và chăm sóc bản thân.");
 
-      // 7. THUỐC (Medication)
-      const ocp = rowData["Thuốc tránh thai"];
-      if (ocp === "Đã uống thuốc đúng giờ") addTip(true, "✅", "Tránh thai", "Rất tốt, bạn đang được bảo vệ an toàn.");
-      if (ocp === "Đã uống bù/ quên thuốc") addTip(true, "⏰", "Quên thuốc", "Đặt báo thức cố định hàng ngày để không quên nữa nhé!");
-      if (rowData["Thuốc ngoài"]) addTip(true, "💊", "Thuốc khác", `Bạn đang dùng thêm thuốc. Nhớ kiểm tra tương tác thuốc nhé.`);
+      // 🎯 Tiết dịch âm đạo
+      vaginalDischargeData.forEach(v => {
+          if (["Trắng đục", "Như lòng trắng trứng", "Ẩm ướt", "Dạng dính"].includes(v)) {
+              addAdvice(true, "Tiết dịch âm đạo này được xem là bình thường. Đây có thể là dấu hiệu của rụng trứng hoặc chu kỳ kinh nguyệt sắp tới.");
+          }
+          if (["Trắng vón cục", "Xám", "Bất thường", "Dạng đốm"].includes(v)) {
+              addAdvice(true, "Tiết dịch âm đạo có dấu hiệu bất thường. Bạn nên đi khám phụ khoa để được tư vấn và điều trị kịp thời.");
+          }
+      });
 
-      // 8. VẬN ĐỘNG (Exercise - Full list)
-      if (e.includes("Không tập")) addTip(true, "🛋️", "Nghỉ ngơi", "Hôm nay nghỉ cũng được, nhưng đừng ngồi một chỗ quá lâu.");
-      if (e.includes("Yoga")) addTip(true, "🧘‍♀️", "Yoga", "Nhớ thực hiện Savasana cuối buổi để thư giãn toàn thân.");
-      if (e.includes("Gym")) addTip(true, "🏋️‍♀️", "Gym", "Nạp Protein sau tập để cơ bắp phục hồi nhé.");
-      if (e.includes("Aerobic & nhảy múa")) addTip(true, "💃", "Nhảy", "Cách xả stress tuyệt vời nhất!");
-      if (e.includes("Bơi lội")) addTip(true, "🏊‍♀️", "Bơi", "Nhớ dưỡng ẩm da và tóc sau khi bơi xong.");
-      if (e.includes("Thể thao đồng đội")) addTip(true, "⚽", "Team sports", "Vừa khỏe vừa vui. Cẩn thận chấn thương va chạm.");
-      if (e.includes("Chạy")) addTip(true, "🏃‍♀️", "Chạy bộ", "Giãn cơ kỹ sau khi chạy để tránh đau chân ngày mai.");
-      if (e.includes("Đạp xe đạp")) addTip(true, "🚴‍♀️", "Đạp xe", "Bài tập tim mạch tuyệt vời và ít chấn thương.");
-      if (e.includes("Đi bộ")) addTip(true, "🚶‍♀️", "Đi bộ", "Duy trì đi bộ 30p mỗi ngày là đủ để khỏe mạnh.");
+      // 🎯 Dấu hiệu rụng trứng
+      ovulationSigns.forEach(o => {
+          if (o.includes("Tăng ham muốn tình dục")) addAdvice(true, "Đây là dấu hiệu bình thường trong rụng trứng.");
+          if (o.includes("Đau bụng dưới và vùng chậu")) addAdvice(true, "Theo dõi nếu đau kéo dài hoặc dữ dội.");
+          if (o.includes("Thay đổi nhiệt độ cơ sở")) addAdvice(true, "Hãy tiếp tục theo dõi nhiệt độ cơ thể hàng ngày để xác định chính xác thời điểm rụng trứng.");
+          if (o.includes("Dịch nhầy âm đạo")) addAdvice(true, "Dịch nhầy trong, giống lòng trắng trứng là dấu hiệu rụng trứng bình thường. Hãy theo dõi sự thay đổi của nó.");
+          if (o.includes("Xuất hiện đốm máu")) addAdvice(true, "Đốm máu có thể xuất hiện do rụng trứng, thường là một lượng nhỏ và không kéo dài.");
+          if (o.includes("Sưng đầu ngực, đau vú")) addAdvice(true, "Các triệu chứng này có thể liên quan đến sự thay đổi hormone trong chu kỳ.");
+          if (o.includes("Cổ tử cung mở rộng")) addAdvice(true, "Khi rụng trứng, cổ tử cung sẽ mềm, mở và cao hơn. Đây là một dấu hiệu tốt.");
+          if (o.includes("Âm đạo hoặc âm hộ bị sưng")) addAdvice(true, "Sự thay đổi hormone có thể gây sưng nhẹ. Nếu cảm thấy khó chịu, bạn nên tham khảo ý kiến bác sĩ.");
+          if (o.includes("Đầy bụng")) addAdvice(true, "Hãy ăn các thực phẩm dễ tiêu và tránh đồ ăn có nhiều gia vị để giảm khó chịu.");
+          if (o.includes("Đầy hơi")) addAdvice(true, "Hãy ăn các thực phẩm dễ tiêu và tránh đồ ăn có nhiều gia vị để giảm khó chịu.");
+          if (o.includes("Nhức đầu")) addAdvice(true, "Các triệu chứng này có thể liên quan đến rụng trứng hoặc các yếu tố khác. Hãy nghỉ ngơi và uống đủ nước.");
+          if (o.includes("Buồn nôn")) addAdvice(true, "Các triệu chứng này có thể liên quan đến rụng trứng hoặc các yếu tố khác. Hãy nghỉ ngơi và uống đủ nước.");
+      });
 
-      // 9. TÌNH DỤC (Sexual Activity - Full list)
-      if (sex.includes("Không quan hệ tình dục")) addTip(true, "🚫", "Kiêng", "Dành thời gian chăm sóc bản thân theo cách khác.");
-      if (sex.includes("Thủ dâm")) addTip(true, "🌸", "Self-love", "Cách an toàn để giảm stress và ngủ ngon. Nhớ vệ sinh tay.");
-      if (sex.includes("Quan hệ tình dục có bảo vệ")) addTip(true, "🛡️", "An toàn", "Tuyệt vời. Bạn đang bảo vệ mình và đối tác rất tốt.");
-      if (sex.includes("Quan hệ tình dục không bảo vệ")) addTip(true, "❗", "Nguy cơ", "Nếu lo lắng, hãy cân nhắc thuốc khẩn cấp và kiểm tra sức khỏe.");
-      if (sex.includes("Quan hệ tình dục bằng miệng")) addTip(true, "👅", "Oral Sex", "Vẫn có nguy cơ lây bệnh (nhiệt miệng, viêm họng). Hãy chú ý vệ sinh.");
-      if (sex.includes("Quan hệ tình dục qua đường hậu môn")) addTip(true, "🍑", "Anal Sex", "Sử dụng nhiều gel bôi trơn để tránh tổn thương. Vệ sinh kỹ.");
-      if (sex.includes("Cực khoái")) addTip(true, "🎆", "Cực khoái", "Liều thuốc giảm đau và an thần tự nhiên tuyệt diệu.");
-      if (sex.includes("Nhu cầu tình dục cao")) addTip(true, "🔥", "Ham muốn cao", "Dấu hiệu sức khỏe tốt hoặc đang rụng trứng.");
-      if (sex.includes("Nhu cầu tình dục bình thường")) addTip(true, "😌", "Ham muốn ổn", "Cân bằng là tốt nhất.");
-      if (sex.includes("Nhu cầu tình dục thấp")) addTip(true, "🧊", "Ham muốn thấp", "Đừng áp lực. Stress và mệt mỏi thường là nguyên nhân chính.");
-
-      // 10. DỊCH ÂM ĐẠO (Vaginal Discharge - Full list)
-      if (v.includes("Không có dịch")) addTip(true, "🌵", "Không dịch", "Bình thường ở những ngày vừa sạch kinh.");
-      if (v.includes("Trắng đục")) addTip(true, "⚪", "Trắng đục", "Dịch sinh lý bình thường, không ngứa là ổn.");
-      if (v.includes("Ẩm ướt")) addTip(true, "💧", "Ẩm ướt", "Cơ thể đang có nồng độ Estrogen tốt.");
-      if (v.includes("Dạng dính")) addTip(true, "🍯", "Dịch dính", "Thường xuất hiện sau khi hết kinh.");
-      if (v.includes("Như lòng trắng trứng")) addTip(true, "🥚", "Rụng trứng", "Thời điểm 'vàng' để thụ thai. Dịch này giúp tinh trùng di chuyển tốt.");
-      if (v.includes("Dạng đốm")) addTip(true, "🔴", "Đốm máu", "Nếu không phải đến kỳ, có thể là máu báo rụng trứng hoặc tổn thương nhỏ.");
-      if (v.includes("Bất thường") || v.includes("Trắng vón cục") || v.includes("Xám")) {
-        addTip(true, "🚑", "Dịch lạ", "Dấu hiệu nấm hoặc viêm nhiễm. Nên đi khám phụ khoa sớm.");
+      // 🎯 Cân nặng
+      if (rowData['Cân nặng (kg)'] && rowData['Cân nặng (kg)'] !== "Không có") {
+          const weightStr = rowData['Cân nặng (kg)'].replace(' kg', '');
+          const weight = parseFloat(weightStr);
+          if (weight < 45) addAdvice(true, "Cân nặng hơi thấp, chú ý bổ sung dinh dưỡng.");
+          if (weight > 70) addAdvice(true, "Bạn nên tập luyện và ăn uống điều độ để giữ cân nặng hợp lý.");
       }
 
-      // 11. RỤNG TRỨNG (Ovulation Signs - Full list)
-      if (o.includes("Thay đổi nhiệt độ cơ sở")) addTip(true, "🌡️", "Nhiệt độ", "Thân nhiệt tăng nhẹ báo hiệu đã rụng trứng.");
-      if (o.includes("Dịch nhầy âm đạo")) addTip(true, "💦", "Dịch nhầy", "Cửa sổ thụ thai đang mở.");
-      if (o.includes("Xuất hiện đốm máu")) addTip(true, "🔴", "Máu rụng trứng", "Một chút máu là bình thường khi nang trứng vỡ.");
-      if (o.includes("Tăng ham muốn tình dục")) addTip(true, "🔥", "Hứng khởi", "Cơ thể đang mời gọi theo bản năng tự nhiên.");
-      if (o.includes("Sưng đầu ngực, đau vú")) addTip(true, "🤕", "Ngực căng", "Do progesterone tăng cao. Mặc áo rộng cho thoải mái.");
-      if (o.includes("Đau bụng dưới và vùng chậu")) addTip(true, "💥", "Đau bụng", "Đau Mittelschmerz (giữa chu kỳ). Chườm ấm sẽ đỡ.");
-      if (o.includes("Cổ tử cung mở rộng")) addTip(true, "🔓", "Cổ tử cung", "Cổ tử cung mềm, cao, mở - Dễ thụ thai nhất lúc này.");
-      if (o.includes("Âm đạo hoặc âm hộ bị sưng")) addTip(true, "🎈", "Sưng nhẹ", "Do lưu lượng máu tăng cao vùng chậu, không sao cả.");
-      if (o.includes("Đầy bụng") || o.includes("Đầy hơi")) addTip(true, "🤰", "Chướng bụng", "Ăn nhẹ, chia nhỏ bữa để giảm khó chịu.");
-      if (o.includes("Buồn nôn")) addTip(true, "🤢", "Buồn nôn", "Nghỉ ngơi, uống nước gừng.");
-      if (o.includes("Nhức đầu")) addTip(true, "🤯", "Đau đầu", "Nghỉ ngơi nơi tối, yên tĩnh.");
-
-      // 12. CÂN NẶNG & GIẤC NGỦ
-      const weight = parseFloat(rowData['Cân nặng']);
-      if (weight && weight < 45) addTip(true, "🥑", "Cân nặng", "Hơi nhẹ cân. Bổ sung thêm bữa phụ dinh dưỡng nhé.");
-      if (weight && weight > 65) addTip(true, "⚖️", "Cân nặng", "Duy trì vận động đều đặn để cơ thể săn chắc.");
-
-      const sleep = rowData["Giấc ngủ"];
-      if (sleep && sleep !== "Không có") addTip(true, "💤", "Giấc ngủ", `Bạn ghi: "${sleep}". Giấc ngủ rất quan trọng với nội tiết, ưu tiên nó nhé.`);
-
-      if (adviceList.length === 0) {
-        return "Hôm nay bạn ít chia sẻ quá. Hãy nhớ uống đủ nước và ngủ sớm nhé! 💖";
+      // 🎯 Thuốc
+      if (rowData["Thuốc ngoài"] && rowData["Thuốc ngoài"] !== "Không có") {
+          addAdvice(true, `Bạn đang dùng thuốc: ${rowData["Thuốc ngoài"]}. Hãy tuân thủ đúng hướng dẫn.`);
+      }
+      if (rowData["Thuốc tránh thai đường uống (OC)"] === "Đã uống bù/ quên thuốc") {
+          addAdvice(true, "Hãy chú ý uống thuốc đúng giờ để đảm bảo hiệu quả tránh thai.");
       }
 
-      return adviceList.join('\n\n');
+      // 🎯 Khác (Thêm các option mới từ form)
+      const other = rowData["Khác"];
+      if (other.includes("Thiền")) addAdvice(true, "Tuyệt vời! Thiền giúp cân bằng hormone và cảm xúc.");
+      if (other.includes("Bài tập Kegel")) addAdvice(true, "Bài tập Kegel rất tốt cho cơ sàn chậu. Tiếp tục duy trì nhé!");
+      if (other.includes("Bài tập thở")) addAdvice(true, "Oxy là liều thuốc tự nhiên tốt nhất cho làn da và não bộ.");
+      if (other.includes("Căng thẳng")) addAdvice(true, "Hãy ngưng việc đang làm lại và hít thở sâu 5 lần để giảm căng thẳng.");
+      if (other.includes("Rượu")) addAdvice(true, "Nhớ uống thêm nước lọc để cơ thể không bị mất nước nhé.");
+
+      if (adviceList.size === 0) {
+          return "Không có vấn đề nổi bật nào hôm nay. Hãy tiếp tục duy trì lối sống lành mạnh nhé!";
+      }
+
+      return [...adviceList].join('\n');
     }
 
     document.addEventListener("DOMContentLoaded", () => {
